@@ -36,7 +36,7 @@ const colLabels = computed(() =>
   </el-table>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-table {
   width: 100%;
 }

@@ -117,84 +117,84 @@ function onTypeChange(v: Variable, type: Variable['type']): void {
   </el-drawer>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .var-drawer {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
 
-.var-tip {
-  padding: 10px 12px;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--color-text-3);
-  background: var(--color-bg-2);
-  border-radius: var(--radius-md);
-}
+  .var-tip {
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--color-text-3);
+    background: var(--color-bg-2);
+    border-radius: var(--radius-md);
 
-.var-tip code {
-  padding: 1px 4px;
-  font-family: var(--font-mono);
-  color: var(--color-primary);
-  background: var(--color-primary-light);
-  border-radius: 4px;
-}
+    code {
+      padding: 1px 4px;
+      font-family: var(--font-mono);
+      color: var(--color-primary);
+      background: var(--color-primary-light);
+      border-radius: 4px;
+    }
+  }
 
-.add-btn {
-  align-self: flex-start;
-}
+  .add-btn {
+    align-self: flex-start;
+  }
 
-.var-empty {
-  padding: 40px 0;
-  font-size: 13px;
-  color: var(--color-text-4);
-  text-align: center;
-}
+  .var-empty {
+    padding: 40px 0;
+    font-size: 13px;
+    color: var(--color-text-4);
+    text-align: center;
+  }
 
-.var-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+  .var-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 
-.var-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  background: var(--color-bg-2);
-  border-radius: var(--radius-md);
-}
+    .var-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      background: var(--color-bg-2);
+      border-radius: var(--radius-md);
 
-.var-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
+      .var-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
 
-.var-name {
-  flex: 1;
-}
+        .var-name {
+          flex: 1;
+        }
 
-.var-type {
-  width: 110px;
-}
+        .var-type {
+          width: 110px;
+        }
 
-.var-num {
-  flex: 1;
-}
+        .var-num {
+          flex: 1;
+        }
 
-.var-label {
-  flex-shrink: 0;
-  width: 56px;
-  font-size: 12px;
-  color: var(--color-text-3);
-}
+        .var-label {
+          flex-shrink: 0;
+          width: 56px;
+          font-size: 12px;
+          color: var(--color-text-3);
+        }
+      }
 
-.var-ref {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--color-primary);
+      .var-ref {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--color-primary);
+      }
+    }
+  }
 }
 </style>

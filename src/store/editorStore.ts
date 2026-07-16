@@ -1,7 +1,15 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { cloneDeep } from 'lodash-es';
-import type { AppPage, ComponentNode, Variable, AppListItem } from '@/types';
+import type {
+  AppPage,
+  ComponentNode,
+  Variable,
+  AppListItem,
+  DataTableConfig,
+  DataTableColumn,
+  WorkflowConfig,
+} from '@/types';
 import { materialRegistry } from '@/app-editor/material/registry';
 import { genId } from '@/utils/common';
 
@@ -17,6 +25,11 @@ export const useEditorStore = defineStore('editor', () => {
   const nodes = ref<ComponentNode[]>([]);
   const variables = ref<Variable[]>([]);
   const selectedId = ref<string | null>(null);
+
+  // ===== 交互逻辑：全局变量 / 数据表 / 工作流 =====
+  const globalVariables = ref<Variable[]>([]);
+  const dataTables = ref<DataTableConfig[]>([]);
+  const workflows = ref<WorkflowConfig[]>([]);
 
   // 撤销/重做历史（仅针对当前页的 nodes 快照）
   const past = ref<ComponentNode[][]>([]);
@@ -77,6 +90,10 @@ export const useEditorStore = defineStore('editor', () => {
     selectedId.value = null;
     past.value = [];
     future.value = [];
+    // 交互逻辑数据
+    globalVariables.value = cloneDeep(app.globalVariables ?? []);
+    dataTables.value = cloneDeep(app.dataTables ?? []);
+    workflows.value = cloneDeep(app.workflows ?? []);
   }
 
   /** 切换到指定页面（先同步当前页，再加载目标页） */
@@ -282,6 +299,148 @@ export const useEditorStore = defineStore('editor', () => {
     variables.value = variables.value.filter((it) => it.id !== id);
   }
 
+  // ===== 全局变量管理（交互逻辑，跨页面共享） =====
+  function addGlobalVariable(): Variable {
+    const v: Variable = {
+      id: genId(),
+      name: `global_${globalVariables.value.length + 1}`,
+      type: 'string',
+      defaultValue: '',
+    };
+    globalVariables.value.push(v);
+    return v;
+  }
+
+  function updateGlobalVariable(id: string, patch: Partial<Variable>): void {
+    const v = globalVariables.value.find((it) => it.id === id);
+    if (v) Object.assign(v, patch);
+  }
+
+  function removeGlobalVariable(id: string): void {
+    globalVariables.value = globalVariables.value.filter((it) => it.id !== id);
+  }
+
+  // ===== 数据表管理（交互逻辑，本地缓存） =====
+  function addDataTable(name?: string): DataTableConfig {
+    const table: DataTableConfig = {
+      id: genId(),
+      name: name?.trim() || `数据表${dataTables.value.length + 1}`,
+      columns: [{ id: genId(), name: 'id', type: 'string' }],
+      rows: [],
+    };
+    dataTables.value.push(table);
+    return table;
+  }
+
+  function updateDataTable(id: string, patch: Partial<DataTableConfig>): void {
+    const t = dataTables.value.find((it) => it.id === id);
+    if (t) Object.assign(t, patch);
+  }
+
+  function removeDataTable(id: string): void {
+    dataTables.value = dataTables.value.filter((it) => it.id !== id);
+  }
+
+  /** 给数据表新增列 */
+  function addTableColumn(tableId: string, name?: string, type?: DataTableColumn['type']): void {
+    const t = dataTables.value.find((it) => it.id === tableId);
+    if (!t) return;
+    const col: DataTableColumn = {
+      id: genId(),
+      name: name?.trim() || `field_${t.columns.length + 1}`,
+      type: type ?? 'string',
+    };
+    t.columns.push(col);
+    // 已有行补默认值
+    for (const row of t.rows) {
+      row[col.id] = col.type === 'number' ? 0 : col.type === 'boolean' ? false : '';
+    }
+  }
+
+  /** 更新列定义（改名/改类型时同步更新行数据） */
+  function updateTableColumn(
+    tableId: string,
+    colId: string,
+    patch: Partial<DataTableColumn>,
+  ): void {
+    const t = dataTables.value.find((it) => it.id === tableId);
+    if (!t) return;
+    const col = t.columns.find((c) => c.id === colId);
+    if (!col) return;
+    const oldType = col.type;
+    Object.assign(col, patch);
+    // 类型变更时转换已有数据
+    if (patch.type && patch.type !== oldType) {
+      for (const row of t.rows) {
+        const raw = row[colId];
+        if (patch.type === 'number') row[colId] = Number(raw) || 0;
+        else if (patch.type === 'boolean') row[colId] = raw === 'true' || raw === true;
+        else row[colId] = String(raw ?? '');
+      }
+    }
+  }
+
+  /** 删除列（同步删除行中对应字段） */
+  function removeTableColumn(tableId: string, colId: string): void {
+    const t = dataTables.value.find((it) => it.id === tableId);
+    if (!t) return;
+    t.columns = t.columns.filter((c) => c.id !== colId);
+    for (const row of t.rows) {
+      delete row[colId];
+    }
+  }
+
+  /** 新增空数据行 */
+  function addTableRow(tableId: string): void {
+    const t = dataTables.value.find((it) => it.id === tableId);
+    if (!t) return;
+    const row: Record<string, string | number | boolean> = {};
+    for (const col of t.columns) {
+      row[col.id] = col.type === 'number' ? 0 : col.type === 'boolean' ? false : '';
+    }
+    t.rows.push(row);
+  }
+
+  /** 更新行中某单元格的值 */
+  function updateTableCell(
+    tableId: string,
+    rowIndex: number,
+    colId: string,
+    value: string | number | boolean,
+  ): void {
+    const t = dataTables.value.find((it) => it.id === tableId);
+    if (!t || !t.rows[rowIndex]) return;
+    t.rows[rowIndex][colId] = value;
+  }
+
+  /** 删除行 */
+  function removeTableRow(tableId: string, rowIndex: number): void {
+    const t = dataTables.value.find((it) => it.id === tableId);
+    if (!t) return;
+    t.rows.splice(rowIndex, 1);
+  }
+
+  // ===== 工作流管理（交互逻辑，当前仅展示标题） =====
+  function addWorkflow(name?: string, description?: string): WorkflowConfig {
+    const wf: WorkflowConfig = {
+      id: genId(),
+      name: name?.trim() || `工作流${workflows.value.length + 1}`,
+      description: description ?? '',
+      inputParams: '',
+    };
+    workflows.value.push(wf);
+    return wf;
+  }
+
+  function updateWorkflow(id: string, patch: Partial<WorkflowConfig>): void {
+    const wf = workflows.value.find((it) => it.id === id);
+    if (wf) Object.assign(wf, patch);
+  }
+
+  function removeWorkflow(id: string): void {
+    workflows.value = workflows.value.filter((it) => it.id !== id);
+  }
+
   function undo(): void {
     const snap = past.value.pop();
     if (!snap) return;
@@ -301,12 +460,21 @@ export const useEditorStore = defineStore('editor', () => {
   const canUndo = computed(() => past.value.length > 0);
   const canRedo = computed(() => future.value.length > 0);
 
-  /** 导出全部页面数据（保存前会同步当前页） */
-  function toAppData(): { pages: AppPage[]; homePageId: string } {
+  /** 导出全部应用数据（保存前会同步当前页） */
+  function toAppData(): {
+    pages: AppPage[];
+    homePageId: string;
+    globalVariables: Variable[];
+    dataTables: DataTableConfig[];
+    workflows: WorkflowConfig[];
+  } {
     syncCurrentPage();
     return {
       pages: cloneDeep(pages.value),
       homePageId: homePageId.value,
+      globalVariables: cloneDeep(globalVariables.value),
+      dataTables: cloneDeep(dataTables.value),
+      workflows: cloneDeep(workflows.value),
     };
   }
 
@@ -346,6 +514,27 @@ export const useEditorStore = defineStore('editor', () => {
     addVariable,
     updateVariable,
     removeVariable,
+    // 交互逻辑：全局变量
+    globalVariables,
+    addGlobalVariable,
+    updateGlobalVariable,
+    removeGlobalVariable,
+    // 交互逻辑：数据表
+    dataTables,
+    addDataTable,
+    updateDataTable,
+    removeDataTable,
+    addTableColumn,
+    updateTableColumn,
+    removeTableColumn,
+    addTableRow,
+    updateTableCell,
+    removeTableRow,
+    // 交互逻辑：工作流
+    workflows,
+    addWorkflow,
+    updateWorkflow,
+    removeWorkflow,
     undo,
     redo,
     toAppData,

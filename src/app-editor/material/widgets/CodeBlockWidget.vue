@@ -23,7 +23,7 @@ const lines = computed(() => codeText.value.split('\n'));
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-codeblock {
   width: 100%;
   overflow: hidden;
@@ -69,10 +69,10 @@ const lines = computed(() => codeText.value.split('\n'));
   text-align: right;
   color: var(--color-text-4);
   border-right: 1px solid var(--color-border);
-}
 
-.line-numbers li {
-  font-family: var(--font-mono);
+  li {
+    font-family: var(--font-mono);
+  }
 }
 
 code {

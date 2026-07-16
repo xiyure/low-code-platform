@@ -88,56 +88,56 @@ function clearSelect(): void {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .canvas-wrapper {
   flex: 1;
   overflow: auto;
   background: var(--color-bg-2);
-}
 
-.canvas-stage {
-  display: flex;
-  justify-content: center;
-  min-height: 100%;
-  padding: 32px 24px;
-}
+  .canvas-stage {
+    display: flex;
+    justify-content: center;
+    min-height: 100%;
+    padding: 32px 24px;
 
-.canvas-page {
-  width: 100%;
-  max-width: 720px;
-  min-height: 600px;
-  padding: 24px;
-  background: var(--color-bg-1);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-}
+    .canvas-page {
+      width: 100%;
+      max-width: 720px;
+      min-height: 600px;
+      padding: 24px;
+      background: var(--color-bg-1);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
 
-.canvas-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 480px;
-  color: var(--color-text-4);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-md);
-}
+      .canvas-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 480px;
+        color: var(--color-text-4);
+        border: 1px dashed var(--color-border);
+        border-radius: var(--radius-md);
 
-.empty-icon {
-  margin-bottom: 8px;
-  font-size: 40px;
-}
+        .empty-icon {
+          margin-bottom: 8px;
+          font-size: 40px;
+        }
 
-.empty-sub {
-  margin-top: 4px;
-  font-size: 12px;
-}
+        .empty-sub {
+          margin-top: 4px;
+          font-size: 12px;
+        }
+      }
 
-.flow-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 200px;
+      .flow-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 200px;
+      }
+    }
+  }
 }
 
 .drag-ghost {

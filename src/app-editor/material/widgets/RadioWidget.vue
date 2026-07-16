@@ -38,7 +38,7 @@ defineExpose({
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-radio {
   display: flex;
   flex-direction: column;

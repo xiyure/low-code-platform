@@ -34,7 +34,7 @@ const buttonSize = computed<ButtonSize>(() => (props.size ?? 'default') as Butto
   </el-button>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-button {
   display: inline-flex;
   width: 100%;

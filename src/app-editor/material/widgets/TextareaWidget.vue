@@ -37,7 +37,7 @@ defineExpose({
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-textarea {
   display: flex;
   flex-direction: column;

@@ -33,7 +33,7 @@ defineExpose({
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-slider {
   display: flex;
   flex-direction: column;

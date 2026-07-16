@@ -38,7 +38,7 @@ defineExpose({
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-checkbox {
   display: flex;
   flex-direction: column;

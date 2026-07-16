@@ -102,7 +102,7 @@ const wrapperStyle = computed<CSSProperties>(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .comp-wrapper {
   width: 100%;
 }

@@ -60,30 +60,30 @@ const tabPosition = computed<TabPosition>(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-tabs {
   width: 100%;
-}
 
-.tab-content {
-  padding: 12px;
-  font-size: 13px;
-  color: var(--color-text-2);
-}
+  .tab-content {
+    padding: 12px;
+    font-size: 13px;
+    color: var(--color-text-2);
+  }
 
-.tabs-slot {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px 0;
-}
+  .tabs-slot {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 0;
+  }
 
-.tabs-placeholder {
-  padding: 16px;
-  font-size: 13px;
-  color: var(--color-text-4);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  text-align: center;
+  .tabs-placeholder {
+    padding: 16px;
+    font-size: 13px;
+    color: var(--color-text-4);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+    text-align: center;
+  }
 }
 </style>

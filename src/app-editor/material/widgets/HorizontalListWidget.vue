@@ -51,7 +51,7 @@ const listItems = computed<CardItem[]>(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-hlist {
   display: flex;
   width: 100%;
@@ -59,37 +59,37 @@ const listItems = computed<CardItem[]>(() => {
   overflow-x: auto;
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-md);
-}
 
-.hlist-card {
-  flex-shrink: 0;
-  background: var(--color-bg-1);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-}
+  .hlist-card {
+    flex-shrink: 0;
+    background: var(--color-bg-1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
 
-.hlist-image {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 80px;
-  overflow: hidden;
-  font-size: 12px;
-  color: var(--color-text-4);
-  background: var(--color-bg-3);
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-}
+    .hlist-image {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 80px;
+      overflow: hidden;
+      font-size: 12px;
+      color: var(--color-text-4);
+      background: var(--color-bg-3);
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 
-.hlist-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
 
-.hlist-title {
-  padding: 8px 10px;
-  font-size: 13px;
-  color: var(--color-text-1);
+    .hlist-title {
+      padding: 8px 10px;
+      font-size: 13px;
+      color: var(--color-text-1);
+    }
+  }
 }
 </style>

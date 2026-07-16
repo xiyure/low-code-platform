@@ -36,7 +36,7 @@ const slides = computed<string[]>(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-carousel {
   width: 100%;
 }

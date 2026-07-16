@@ -215,7 +215,7 @@ function onResizeEnd(): void {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .node-wrapper {
   position: relative;
   background: var(--color-bg-1);
@@ -224,119 +224,119 @@ function onResizeEnd(): void {
   transition:
     border-color 0.15s,
     box-shadow 0.15s;
-}
 
-.node-wrapper:hover {
-  border-color: var(--color-primary);
-}
+  &:hover {
+    border-color: var(--color-primary);
+  }
 
-.node-wrapper.selected {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px var(--color-primary-light);
-}
+  &.selected {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-light);
+  }
 
-/* 预览模式：去掉边框与背景 */
-.node-wrapper.readonly {
-  background: transparent;
-  border-color: transparent;
-}
+  /* 预览模式：去掉边框与背景 */
+  &.readonly {
+    background: transparent;
+    border-color: transparent;
 
-.node-wrapper.readonly:hover {
-  border-color: transparent;
-  box-shadow: none;
-}
+    &:hover {
+      border-color: transparent;
+      box-shadow: none;
+    }
+  }
 
-/* 容器型节点 */
-.is-container {
-  background: transparent;
-}
+  /* 容器型节点 */
+  &.is-container {
+    background: transparent;
+  }
 
-/* 容器内拖放区：既是 vuedraggable 容器，也是物料库原生 drop 区 */
-.container-zone {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-height: 56px;
-  padding: 6px;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  transition: background 0.15s, border-color 0.15s;
-}
+  /* 容器内拖放区：既是 vuedraggable 容器，也是物料库原生 drop 区 */
+  .container-zone {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 56px;
+    padding: 6px;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+    transition: background 0.15s, border-color 0.15s;
 
-.container-zone.empty {
-  align-items: center;
-  justify-content: center;
-}
+    &.empty {
+      align-items: center;
+      justify-content: center;
+    }
 
-.container-zone.drop-active {
-  background: var(--color-primary-light);
-  border-color: var(--color-primary);
-}
+    &.drop-active {
+      background: var(--color-primary-light);
+      border-color: var(--color-primary);
+    }
 
-.container-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-height: 24px;
-}
+    .container-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 24px;
+    }
 
-.drop-hint {
-  position: absolute;
-  font-size: 12px;
-  color: var(--color-text-4);
-  pointer-events: none;
-}
+    .drop-hint {
+      position: absolute;
+      font-size: 12px;
+      color: var(--color-text-4);
+      pointer-events: none;
+    }
+  }
 
-.node-toolbar {
-  position: absolute;
-  top: -36px;
-  right: 0;
-  z-index: 20;
-  display: flex;
-  gap: 2px;
-  align-items: center;
-  padding: 2px;
-  background: var(--color-bg-1);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-sm);
-}
+  .node-toolbar {
+    position: absolute;
+    top: -36px;
+    right: 0;
+    z-index: 20;
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    padding: 2px;
+    background: var(--color-bg-1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
 
-.tool-btn {
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  color: var(--color-text-2);
-  transition:
-    background 0.15s,
-    color 0.15s;
-}
+    .tool-btn {
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      color: var(--color-text-2);
+      transition:
+        background 0.15s,
+        color 0.15s;
 
-.tool-btn:hover {
-  color: var(--color-primary);
-  background: var(--color-primary-light);
-}
+      &:hover {
+        color: var(--color-primary);
+        background: var(--color-primary-light);
+      }
 
-.tool-btn.danger:hover {
-  color: var(--color-danger);
-  background: rgb(245 63 63 / 10%);
-}
+      &.danger:hover {
+        color: var(--color-danger);
+        background: rgb(245 63 63 / 10%);
+      }
+    }
+  }
 
-/* 拉伸手柄（仅右下角） */
-.resize-handle {
-  position: absolute;
-  z-index: 21;
-  background: var(--color-primary);
-  border: 2px solid var(--color-bg-1);
-  border-radius: 3px;
-}
+  /* 拉伸手柄（仅右下角） */
+  .resize-handle {
+    position: absolute;
+    z-index: 21;
+    background: var(--color-primary);
+    border: 2px solid var(--color-bg-1);
+    border-radius: 3px;
 
-.rh-se {
-  right: -6px;
-  bottom: -6px;
-  width: 12px;
-  height: 12px;
-  cursor: nwse-resize;
+    &.rh-se {
+      right: -6px;
+      bottom: -6px;
+      width: 12px;
+      height: 12px;
+      cursor: nwse-resize;
+    }
+  }
 }
 
 .drag-ghost {

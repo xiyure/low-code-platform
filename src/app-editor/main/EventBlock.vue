@@ -71,7 +71,7 @@ function moveAction(actionId: string, dir: -1 | 1): void {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .event-block {
   display: flex;
   flex-direction: column;
@@ -79,22 +79,22 @@ function moveAction(actionId: string, dir: -1 | 1): void {
   padding: 10px;
   background: var(--color-bg-2);
   border-radius: var(--radius-md);
-}
 
-.action-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+  .action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
 
-.action-empty {
-  padding: 8px 0;
-  font-size: 12px;
-  color: var(--color-text-4);
-  text-align: center;
-}
+  .action-empty {
+    padding: 8px 0;
+    font-size: 12px;
+    color: var(--color-text-4);
+    text-align: center;
+  }
 
-.add-action-btn {
-  align-self: flex-start;
+  .add-action-btn {
+    align-self: flex-start;
+  }
 }
 </style>

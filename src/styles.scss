@@ -72,19 +72,19 @@ button {
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
-}
 
-::-webkit-scrollbar-thumb {
-  background: var(--color-text-4);
-  border-radius: 4px;
-}
+  &-thumb {
+    background: var(--color-text-4);
+    border-radius: 4px;
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-3);
-}
+    &:hover {
+      background: var(--color-text-3);
+    }
+  }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+  &-track {
+    background: transparent;
+  }
 }
 
 /* Element Plus 主题覆盖 */

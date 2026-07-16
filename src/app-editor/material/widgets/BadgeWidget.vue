@@ -21,21 +21,21 @@ defineProps<{
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-badge {
   display: inline-flex;
   align-items: center;
-}
 
-.badge-content {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 32px;
-  font-size: 13px;
-  color: var(--color-text-2);
-  background: var(--color-bg-2);
-  border-radius: var(--radius-sm);
+  .badge-content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 32px;
+    font-size: 13px;
+    color: var(--color-text-2);
+    background: var(--color-bg-2);
+    border-radius: var(--radius-sm);
+  }
 }
 </style>

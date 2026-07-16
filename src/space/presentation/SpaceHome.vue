@@ -237,7 +237,7 @@ function enterItem(item: AppListItem): void {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .space-home {
   max-width: 1200px;
   padding: 32px 24px 48px;
@@ -284,12 +284,12 @@ function enterItem(item: AppListItem): void {
   border: none;
   border-radius: var(--radius-md);
   transition: all 0.2s;
-}
 
-.tab-item.active {
-  font-weight: 600;
-  color: var(--color-primary);
-  background: var(--color-primary-light);
+  &.active {
+    font-weight: 600;
+    color: var(--color-primary);
+    background: var(--color-primary-light);
+  }
 }
 
 .toolbar-actions {
@@ -322,12 +322,12 @@ function enterItem(item: AppListItem): void {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   transition: all 0.2s;
-}
 
-.resource-card:hover {
-  border-color: var(--color-primary);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  &:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
 }
 
 .card-cover {
@@ -399,12 +399,12 @@ function enterItem(item: AppListItem): void {
   transition:
     color 0.2s,
     background 0.2s;
-}
 
-.card-more-icon:hover,
-.card-more-icon.is-active {
-  color: #1975ff;
-  background: rgb(255 255 255 / 90%);
+  &:hover,
+  &.is-active {
+    color: #1975ff;
+    background: rgb(255 255 255 / 90%);
+  }
 }
 
 .empty-state {

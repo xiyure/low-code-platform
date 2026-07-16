@@ -125,7 +125,7 @@ function renderMarkdown(src: string): string {
   <div class="mat-markdown" v-html="html" />
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-markdown {
   width: 100%;
   font-size: 14px;
@@ -179,9 +179,9 @@ function renderMarkdown(src: string): string {
   color: var(--color-text-1);
   background: var(--color-bg-3);
   border-radius: var(--radius-md);
-}
 
-.md-code-block code {
-  font-family: inherit;
+  code {
+    font-family: inherit;
+  }
 }
 </style>

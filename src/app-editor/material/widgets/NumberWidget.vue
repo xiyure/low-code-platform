@@ -40,7 +40,7 @@ defineExpose({
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-number {
   display: flex;
   flex-direction: column;

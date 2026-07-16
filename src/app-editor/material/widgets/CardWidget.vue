@@ -22,22 +22,22 @@ defineProps<{
   </el-card>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-card {
   width: 100%;
-}
 
-.card-title {
-  font-size: 14px;
-  font-weight: 600;
-}
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+  }
 
-.card-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 60px;
-  font-size: 13px;
-  color: var(--color-text-4);
+  .card-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+    font-size: 13px;
+    color: var(--color-text-4);
+  }
 }
 </style>

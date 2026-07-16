@@ -54,47 +54,47 @@ const gapVal = computed(() => props.gap ?? 12);
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-grid-list {
   display: grid;
   width: 100%;
   padding: 8px;
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-md);
-}
 
-.grid-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-  padding: 16px 8px;
-  background: var(--color-bg-1);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-}
+  .grid-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    padding: 16px 8px;
+    background: var(--color-bg-1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
 
-.grid-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  overflow: hidden;
-  font-size: 22px;
-  color: var(--color-text-2);
-  background: var(--color-bg-3);
-  border-radius: var(--radius-sm);
-}
+    .grid-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      overflow: hidden;
+      font-size: 22px;
+      color: var(--color-text-2);
+      background: var(--color-bg-3);
+      border-radius: var(--radius-sm);
 
-.grid-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
 
-.grid-title {
-  font-size: 12px;
-  color: var(--color-text-2);
+    .grid-title {
+      font-size: 12px;
+      color: var(--color-text-2);
+    }
+  }
 }
 </style>

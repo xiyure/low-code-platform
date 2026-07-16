@@ -220,7 +220,7 @@ function insertVar(field: 'messageText' | 'variableValue', name: string): void {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .action-item {
   display: flex;
   flex-direction: column;
@@ -229,43 +229,43 @@ function insertVar(field: 'messageText' | 'variableValue', name: string): void {
   background: var(--color-bg-1);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-}
 
-.action-row {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
+  .action-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
 
-.action-select {
-  flex: 1;
-}
+    .action-select {
+      flex: 1;
+    }
 
-.action-ops {
-  display: flex;
-  gap: 2px;
-}
+    .action-ops {
+      display: flex;
+      gap: 2px;
 
-.op-btn {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  color: var(--color-text-3);
-}
+      .op-btn {
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        color: var(--color-text-3);
 
-.op-btn:hover {
-  color: var(--color-primary);
-  background: var(--color-primary-light);
-}
+        &:hover {
+          color: var(--color-primary);
+          background: var(--color-primary-light);
+        }
 
-.op-btn.danger:hover {
-  color: var(--color-danger);
-  background: rgb(245 63 63 / 10%);
-}
+        &.danger:hover {
+          color: var(--color-danger);
+          background: rgb(245 63 63 / 10%);
+        }
+      }
+    }
+  }
 
-.action-tip {
-  padding: 4px 6px;
-  font-size: 11px;
-  color: var(--color-warning);
+  .action-tip {
+    padding: 4px 6px;
+    font-size: 11px;
+    color: var(--color-warning);
+  }
 }
 </style>

@@ -64,8 +64,11 @@ const activePage = computed<AppPage | null>(
 /** 确保某页的运行时状态已初始化（切换页时调用） */
 function ensurePageState(pageId: string): void {
   if (pageStates.value[pageId] || !activePage.value) return;
+  // 全局变量作为基底，页面变量覆盖同名全局变量
+  const globalValues = buildInitialValues(app.value?.globalVariables ?? []);
+  const pageValues = buildInitialValues(activePage.value.variables ?? []);
   pageStates.value[pageId] = {
-    varValues: buildInitialValues(activePage.value.variables ?? []),
+    varValues: { ...globalValues, ...pageValues },
     inputValues: {},
     hiddenIds: new Set(),
   };
@@ -256,103 +259,103 @@ function onBack(): void {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .preview-page {
   display: flex;
   flex-direction: column;
   height: 100%;
   background: var(--color-bg-2);
-}
 
-.preview-header {
-  display: flex;
-  flex-shrink: 0;
-  gap: 12px;
-  align-items: center;
-  height: 48px;
-  padding: 0 16px;
-  background: var(--color-bg-1);
-  border-bottom: 1px solid var(--color-border);
-}
+  .preview-header {
+    display: flex;
+    flex-shrink: 0;
+    gap: 12px;
+    align-items: center;
+    height: 48px;
+    padding: 0 16px;
+    background: var(--color-bg-1);
+    border-bottom: 1px solid var(--color-border);
 
-.preview-title {
-  font-size: 15px;
-  font-weight: 600;
-}
+    .preview-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+  }
 
-.page-tabs {
-  display: flex;
-  flex-shrink: 0;
-  gap: 4px;
-  align-items: center;
-  height: 40px;
-  padding: 0 16px;
-  background: var(--color-bg-2);
-  border-bottom: 1px solid var(--color-border);
-}
+  .page-tabs {
+    display: flex;
+    flex-shrink: 0;
+    gap: 4px;
+    align-items: center;
+    height: 40px;
+    padding: 0 16px;
+    background: var(--color-bg-2);
+    border-bottom: 1px solid var(--color-border);
 
-.page-tab {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  height: 30px;
-  padding: 0 10px;
-  color: var(--color-text-2);
-  cursor: pointer;
-  background: var(--color-bg-1);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  transition: all 0.15s;
-}
+    .page-tab {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      height: 30px;
+      padding: 0 10px;
+      color: var(--color-text-2);
+      cursor: pointer;
+      background: var(--color-bg-1);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      transition: all 0.15s;
 
-.page-tab:hover {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-}
+      &:hover {
+        color: var(--color-primary);
+        border-color: var(--color-primary);
+      }
 
-.page-tab.active {
-  color: var(--color-primary);
-  background: var(--color-primary-light);
-  border-color: var(--color-primary);
-}
+      &.active {
+        color: var(--color-primary);
+        background: var(--color-primary-light);
+        border-color: var(--color-primary);
+      }
 
-.home-icon {
-  font-size: 13px;
-  color: var(--color-warning);
-}
+      .home-icon {
+        font-size: 13px;
+        color: var(--color-warning);
+      }
 
-.tab-name {
-  max-width: 120px;
-  font-size: 13px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+      .tab-name {
+        max-width: 120px;
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
 
-.preview-main {
-  display: flex;
-  flex: 1;
-  justify-content: center;
-  padding: 32px 0;
-  overflow-y: auto;
-}
+  .preview-main {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    padding: 32px 0;
+    overflow-y: auto;
 
-.loading,
-.empty {
-  padding: 80px 0;
-  font-size: 14px;
-  color: var(--color-text-4);
-}
+    .loading,
+    .empty {
+      padding: 80px 0;
+      font-size: 14px;
+      color: var(--color-text-4);
+    }
 
-.preview-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  max-width: 720px;
-  padding: 24px;
-  background: var(--color-bg-1);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+    .preview-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      max-width: 720px;
+      padding: 24px;
+      background: var(--color-bg-1);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+  }
 }
 </style>

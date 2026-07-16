@@ -16,8 +16,10 @@ defineProps<{
   />
 </template>
 
-<style scoped>
-.el-divider--vertical {
-  height: 100%;
+<style scoped lang="scss">
+.el-divider {
+  &--vertical {
+    height: 100%;
+  }
 }
 </style>

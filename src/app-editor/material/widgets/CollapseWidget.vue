@@ -44,30 +44,30 @@ const collapseItems = computed<CollapseItem[]>(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-collapse {
   width: 100%;
-}
 
-.collapse-content {
-  font-size: 13px;
-  color: var(--color-text-2);
-}
+  .collapse-content {
+    font-size: 13px;
+    color: var(--color-text-2);
+  }
 
-.collapse-slot {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
-}
+  .collapse-slot {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
 
-.collapse-placeholder {
-  margin-top: 8px;
-  padding: 16px;
-  font-size: 13px;
-  color: var(--color-text-4);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  text-align: center;
+  .collapse-placeholder {
+    margin-top: 8px;
+    padding: 16px;
+    font-size: 13px;
+    color: var(--color-text-4);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+    text-align: center;
+  }
 }
 </style>

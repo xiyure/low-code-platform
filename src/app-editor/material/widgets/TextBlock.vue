@@ -22,7 +22,7 @@ const props = defineProps<{
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-text {
   width: 100%;
   line-height: 1.6;

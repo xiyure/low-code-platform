@@ -72,49 +72,49 @@ const gapVal = computed(() => props.gap ?? 12);
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-waterfall {
   display: flex;
   width: 100%;
   padding: 8px;
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-md);
-}
 
-.waterfall-col {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-}
+  .waterfall-col {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
 
-.waterfall-card {
-  background: var(--color-bg-1);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-}
+    .waterfall-card {
+      background: var(--color-bg-1);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
 
-.waterfall-image {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  overflow: hidden;
-  font-size: 12px;
-  color: var(--color-text-4);
-  background: var(--color-bg-3);
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-}
+      .waterfall-image {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        overflow: hidden;
+        font-size: 12px;
+        color: var(--color-text-4);
+        background: var(--color-bg-3);
+        border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 
-.waterfall-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
 
-.waterfall-title {
-  padding: 8px 10px;
-  font-size: 13px;
-  color: var(--color-text-1);
+      .waterfall-title {
+        padding: 8px 10px;
+        font-size: 13px;
+        color: var(--color-text-1);
+      }
+    }
+  }
 }
 </style>

@@ -26,7 +26,7 @@ const props = defineProps<{
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-container {
   display: flex;
   width: 100%;
@@ -34,14 +34,14 @@ const props = defineProps<{
   min-height: 80px;
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-md);
-}
 
-.container-placeholder {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  color: var(--color-text-4);
+  .container-placeholder {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--color-text-4);
+  }
 }
 </style>

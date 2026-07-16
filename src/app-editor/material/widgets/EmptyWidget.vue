@@ -25,16 +25,16 @@ const defaultIcon = markRaw(ChatDotRound);
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-empty {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   padding: 24px 0;
-}
 
-.empty-icon {
-  color: var(--color-text-4);
+  .empty-icon {
+    color: var(--color-text-4);
+  }
 }
 </style>

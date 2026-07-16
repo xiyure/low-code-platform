@@ -64,7 +64,7 @@ const activeMenu = computed(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .workspace-layout {
   display: flex;
   flex-direction: column;
@@ -124,10 +124,10 @@ const activeMenu = computed(() => {
   color: var(--color-text-3);
   cursor: pointer;
   transition: color 0.2s;
-}
 
-.header-icon:hover {
-  color: var(--color-primary);
+  &:hover {
+    color: var(--color-primary);
+  }
 }
 
 /* 主体：左侧菜单 + 内容 */
@@ -159,17 +159,17 @@ const activeMenu = computed(() => {
   cursor: pointer;
   border-radius: var(--radius-md);
   transition: all 0.2s;
-}
 
-.menu-item:hover {
-  color: var(--color-text-1);
-  background: var(--color-bg-2);
-}
+  &:hover {
+    color: var(--color-text-1);
+    background: var(--color-bg-2);
+  }
 
-.menu-item.active {
-  font-weight: 600;
-  color: var(--color-primary);
-  background: var(--color-primary-light);
+  &.active {
+    font-weight: 600;
+    color: var(--color-primary);
+    background: var(--color-primary-light);
+  }
 }
 
 .menu-icon {

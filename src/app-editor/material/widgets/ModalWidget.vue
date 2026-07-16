@@ -38,7 +38,7 @@ defineExpose({ open, close, getVisible: () => visible.value });
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-modal {
   display: inline-flex;
   width: 100%;

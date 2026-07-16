@@ -140,6 +140,40 @@ export interface AppPage {
   variables: Variable[];
 }
 
+/** 数据表列定义 */
+export interface DataTableColumn {
+  /** 列 id */
+  id: string;
+  /** 列名（字段名） */
+  name: string;
+  /** 列类型 */
+  type: 'string' | 'number' | 'boolean';
+}
+
+/** 数据表配置（交互逻辑 - 配置数据表） */
+export interface DataTableConfig {
+  /** 表 id */
+  id: string;
+  /** 表名 */
+  name: string;
+  /** 列定义 */
+  columns: DataTableColumn[];
+  /** 数据行（每行为 { 列id: 值 }） */
+  rows: Record<string, string | number | boolean>[];
+}
+
+/** 工作流配置（交互逻辑 - 调用工作流，当前仅展示标题） */
+export interface WorkflowConfig {
+  /** 工作流 id */
+  id: string;
+  /** 工作流名称 */
+  name: string;
+  /** 描述 */
+  description?: string;
+  /** 输入参数（JSON 字符串，后续开发时使用） */
+  inputParams?: string;
+}
+
 /** 应用列表项（多页面结构） */
 export interface AppListItem {
   id: string;
@@ -151,4 +185,10 @@ export interface AppListItem {
   pages: AppPage[];
   /** 首页 id（预览默认打开） */
   homePageId: string;
+  /** 全局变量（交互逻辑，供所有页面的组件使用） */
+  globalVariables?: Variable[];
+  /** 数据表列表（交互逻辑，本地缓存） */
+  dataTables?: DataTableConfig[];
+  /** 工作流列表（交互逻辑，仅展示标题） */
+  workflows?: WorkflowConfig[];
 }

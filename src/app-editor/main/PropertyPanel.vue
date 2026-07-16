@@ -66,7 +66,8 @@ const iconCandidates: string[] = [
 /** 解析图标名 → 组件（找不到返回 undefined） */
 function resolveIcon(name: string): Component | undefined {
   if (!name) return undefined;
-  return markRaw((Icons as Record<string, Component>)[name]);
+  const comp = (Icons as Record<string, Component>)[name];
+  return comp ? markRaw(comp) : undefined;
 }
 
 /** optionsEditor 数据操作 */
@@ -578,7 +579,7 @@ const expandedEvent = ref<number | number[]>(0);
   </aside>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .property-panel {
   display: flex;
   flex-shrink: 0;
@@ -586,267 +587,273 @@ const expandedEvent = ref<number | number[]>(0);
   width: 320px;
   background: var(--color-bg-1);
   border-left: 1px solid var(--color-border);
-}
 
-.panel-title {
-  display: flex;
-  align-items: center;
-  height: 44px;
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 600;
-  border-bottom: 1px solid var(--color-border);
-}
+  .panel-title {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--color-border);
+  }
 
-.panel-empty {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  font-size: 13px;
-  color: var(--color-text-4);
-  text-align: center;
-}
+  .panel-empty {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    font-size: 13px;
+    color: var(--color-text-4);
+    text-align: center;
+  }
 
-/* 组件信息头 */
-.comp-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--color-border);
-}
+  /* 组件信息头 */
+  .comp-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border);
 
-.comp-info-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+    &-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
 
-.comp-type {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-1);
-}
+  .comp-type {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-1);
+  }
 
-.comp-id {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  color: var(--color-text-4);
-}
+  .comp-id {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--color-text-4);
+  }
 
-.comp-name {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  font-size: 13px;
-  color: var(--color-text-2);
-  cursor: pointer;
-}
+  .comp-name {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--color-text-2);
+    cursor: pointer;
 
-.comp-name:hover .edit-hint {
-  opacity: 1;
-}
+    &:hover .edit-hint {
+      opacity: 1;
+    }
 
-.edit-hint {
-  font-size: 11px;
-  color: var(--color-primary);
-  opacity: 0;
-  transition: opacity 0.2s;
-}
+    .edit-hint {
+      font-size: 11px;
+      color: var(--color-primary);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+  }
 
-.panel-tabs {
-  display: flex;
-  border-bottom: 1px solid var(--color-border);
-}
+  .panel-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--color-border);
+  }
 
-.tab-btn {
-  flex: 1;
-  height: 40px;
-  padding: 0;
-  font-size: 13px;
-  color: var(--color-text-2);
-  border-radius: 0;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s;
-}
+  .tab-btn {
+    flex: 1;
+    height: 40px;
+    padding: 0;
+    font-size: 13px;
+    color: var(--color-text-2);
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
 
-.tab-btn.active {
-  font-weight: 600;
-  color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
-}
+    &.active {
+      font-weight: 600;
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+    }
+  }
 
-.panel-body {
-  flex: 1;
-  padding: 16px;
-  overflow-y: auto;
-}
+  .panel-body {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
 
-.form-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
+    .form-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
 
-.form-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 10px;
-}
+      .var-hint {
+        padding: 8px 10px;
+        font-size: 11px;
+        color: var(--color-text-3);
+        background: var(--color-bg-2);
+        border-radius: var(--radius-md);
 
-.form-label {
-  font-size: 12px;
-  color: var(--color-text-2);
-}
+        code {
+          font-family: var(--font-mono);
+          color: var(--color-primary);
+        }
+      }
 
-.var-hint {
-  padding: 8px 10px;
-  font-size: 11px;
-  color: var(--color-text-3);
-  background: var(--color-bg-2);
-  border-radius: var(--radius-md);
-}
+      .form-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 10px;
 
-.var-hint code {
-  font-family: var(--font-mono);
-  color: var(--color-primary);
-}
+        .form-label {
+          font-size: 12px;
+          color: var(--color-text-2);
+        }
 
-.var-insert {
-  margin-top: 2px;
-}
+        .var-insert {
+          margin-top: 2px;
+        }
+      }
+    }
 
-/* 样式 Tab */
-.style-list :deep(.el-collapse-item__header) {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-1);
-}
+    /* 样式 Tab */
+    .style-list {
+      :deep(.el-collapse-item__header) {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--color-text-1);
+      }
 
-.style-list :deep(.el-collapse-item__content) {
-  padding-bottom: 8px;
-}
+      :deep(.el-collapse-item__content) {
+        padding-bottom: 8px;
+      }
+    }
 
-/* 事件 Tab */
-.event-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+    /* 事件 Tab */
+    .event-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
 
-.event-add .event-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 6px;
-}
+      .event-add {
+        .event-buttons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 6px;
+        }
+      }
 
-.event-collapse :deep(.el-collapse-item__header) {
-  height: auto;
-  padding: 6px 0;
-}
+      .event-collapse {
+        :deep(.el-collapse-item__header) {
+          height: auto;
+          padding: 6px 0;
+        }
+      }
 
-.event-header {
-  display: flex;
-  flex: 1;
-  gap: 8px;
-  align-items: center;
-  justify-content: space-between;
-}
+      .event-header {
+        display: flex;
+        flex: 1;
+        gap: 8px;
+        align-items: center;
+        justify-content: space-between;
 
-.event-type-tag {
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-primary);
-  background: var(--color-primary-light);
-  border-radius: var(--radius-sm);
-}
+        .event-type-tag {
+          padding: 2px 8px;
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--color-primary);
+          background: var(--color-primary-light);
+          border-radius: var(--radius-sm);
+        }
 
-.event-action-count {
-  flex: 1;
-  font-size: 12px;
-  color: var(--color-text-3);
-}
+        .event-action-count {
+          flex: 1;
+          font-size: 12px;
+          color: var(--color-text-3);
+        }
 
-.event-del {
-  margin-right: 4px;
-}
+        .event-del {
+          margin-right: 4px;
+        }
+      }
+    }
 
-.muted {
-  font-size: 12px;
-  color: var(--color-text-4);
-}
+    .muted {
+      font-size: 12px;
+      color: var(--color-text-4);
+    }
 
-/* 图标选择器 */
-.icon-picker {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+    /* 图标选择器 */
+    .icon-picker {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
 
-.icon-picker-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
+      &-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
 
-.icon-preview {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  font-size: 18px;
-  color: var(--color-text-1);
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-}
+      .icon-preview {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        font-size: 18px;
+        color: var(--color-text-1);
+        background: var(--color-bg-2);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
 
-.icon-preview-empty {
-  font-size: 11px;
-  color: var(--color-text-4);
-}
+        &-empty {
+          font-size: 11px;
+          color: var(--color-text-4);
+        }
+      }
 
-.icon-candidates {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 4px;
-  max-height: 180px;
-  padding: 6px;
-  overflow-y: auto;
-  background: var(--color-bg-2);
-  border-radius: var(--radius-md);
-}
+      .icon-candidates {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 4px;
+        max-height: 180px;
+        padding: 6px;
+        overflow-y: auto;
+        background: var(--color-bg-2);
+        border-radius: var(--radius-md);
 
-.icon-candidate {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  font-size: 14px;
-  color: var(--color-text-2);
-}
+        .icon-candidate {
+          width: 28px;
+          height: 28px;
+          padding: 0;
+          font-size: 14px;
+          color: var(--color-text-2);
 
-.icon-candidate.active {
-  color: var(--color-primary);
-  background: var(--color-primary-light);
-}
+          &.active {
+            color: var(--color-primary);
+            background: var(--color-primary-light);
+          }
+        }
+      }
+    }
 
-/* 选项编辑器 */
-.options-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+    /* 选项编辑器 */
+    .options-editor {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
 
-.option-row {
-  display: flex;
-  gap: 6px;
-  align-items: center;
+      .option-row {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+    }
+  }
 }
 </style>

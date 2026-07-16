@@ -20,7 +20,7 @@ defineProps<{
   </el-link>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .el-link {
   width: 100%;
 }

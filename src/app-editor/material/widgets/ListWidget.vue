@@ -31,55 +31,57 @@ const listItems = computed<string[]>(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-list {
   width: 100%;
-}
 
-.bordered {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-}
+  .bordered {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
 
-.list-item {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  border-bottom: 1px solid var(--color-border);
-}
+    .list-item {
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
 
-.bordered .list-item:last-child {
-  border-bottom: none;
-}
+  .list-item {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
 
-.size-large {
-  padding: 14px 16px;
-  font-size: 15px;
-}
+    .item-index {
+      flex-shrink: 0;
+      min-width: 20px;
+      height: 20px;
+      font-size: 11px;
+      line-height: 20px;
+      color: var(--color-text-4);
+      text-align: center;
+      background: var(--color-bg-2);
+      border-radius: 50%;
+    }
 
-.size-default {
-  padding: 10px 14px;
-  font-size: 13px;
-}
+    .item-text {
+      color: var(--color-text-2);
+    }
+  }
 
-.size-small {
-  padding: 6px 12px;
-  font-size: 12px;
-}
+  .size-large {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
 
-.item-index {
-  flex-shrink: 0;
-  min-width: 20px;
-  height: 20px;
-  font-size: 11px;
-  line-height: 20px;
-  color: var(--color-text-4);
-  text-align: center;
-  background: var(--color-bg-2);
-  border-radius: 50%;
-}
+  .size-default {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
 
-.item-text {
-  color: var(--color-text-2);
+  .size-small {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
 }
 </style>

@@ -31,7 +31,7 @@ defineExpose({
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-switch {
   display: flex;
   flex-direction: column;

@@ -10,7 +10,7 @@
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
-    "lint:style": "stylelint \"src/**/*.{css,vue}\" --fix",
+    "lint:style": "stylelint \"src/**/*.{css,scss,vue}\" --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,vue,css,scss,json}\""
   },
   "dependencies": {
@@ -35,6 +35,7 @@
     "eslint-plugin-vue": "^10.9.2",
     "postcss-html": "^1.8.1",
     "prettier": "^3.9.5",
+    "sass": "^1.101.0",
     "stylelint": "^17.14.0",
     "stylelint-config-recess-order": "^7.7.0",
     "stylelint-config-recommended-vue": "^1.6.1",

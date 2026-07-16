@@ -21,28 +21,28 @@ const props = defineProps<{
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-image {
   width: 100%;
   height: 100%;
   overflow: hidden;
-}
 
-.mat-image img {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
 
-.image-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-size: 13px;
-  color: var(--color-text-4);
-  background: var(--color-bg-3);
-  border-radius: var(--radius-md);
+  .image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 13px;
+    color: var(--color-text-4);
+    background: var(--color-bg-3);
+    border-radius: var(--radius-md);
+  }
 }
 </style>

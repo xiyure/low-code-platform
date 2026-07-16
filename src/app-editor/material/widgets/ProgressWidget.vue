@@ -20,7 +20,7 @@ defineProps<{
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-progress {
   display: flex;
   align-items: center;

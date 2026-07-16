@@ -23,7 +23,7 @@ const currentPage = ref(1);
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-pagination {
   display: flex;
   justify-content: center;

@@ -42,7 +42,7 @@ defineExpose({
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-input {
   display: flex;
   flex-direction: column;

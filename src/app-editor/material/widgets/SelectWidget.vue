@@ -54,7 +54,7 @@ defineExpose({
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .mat-select {
   display: flex;
   flex-direction: column;
