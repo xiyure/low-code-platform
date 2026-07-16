@@ -97,7 +97,9 @@ const wrapperStyle = computed<CSSProperties>(() => {
 <template>
   <div class="comp-wrapper" :style="wrapperStyle">
     <component :is="Comp" v-bind="node.props">
-      <slot />
+      <template v-for="(_, name) in $slots" #[name]="slotProps">
+        <slot :name="name" v-bind="slotProps" />
+      </template>
     </component>
   </div>
 </template>

@@ -1,0 +1,135 @@
+<script setup lang="ts">
+import { ref, toRef } from 'vue';
+import { useDraggable } from 'vue-draggable-plus';
+import type { ComponentNode, ComponentEvent } from '@/types';
+import { useEditorStore } from '@/store/editorStore';
+import NodeWrapper from './NodeWrapper.vue';
+
+/**
+ * SlotContainer：封装单个 slot 的 container-list + SortableJS 拖拽逻辑。
+ *
+ * 用途：
+ * - 普通容器（container/card/columns/列表类）：slotName 为空，绑定 node.children
+ * - 多 slot 容器（折叠面板）：slotName 为 'panel-0' 等，绑定 node.slots['panel-0']
+ *
+ * 为什么需要独立组件：
+ * useDraggable 是 composable，必须在 setup 顶层调用，不能在 v-for 循环中调用。
+ * 多 slot 场景需要多个 useDraggable 实例，因此用独立子组件封装。
+ */
+const props = defineProps<{
+  /** 该 slot 的子节点数组（指向 node.children 或 node.slots[slotName]） */
+  children: ComponentNode[];
+  /** 父节点 id（用于 addNode） */
+  parentId: string;
+  /** slot 名称（空字符串表示默认 slot） */
+  slotName?: string;
+  /** 预览模式：只渲染，无拖拽 */
+  readonly?: boolean;
+  /** 预览模式事件回调 */
+  eventHandler?: (node: ComponentNode, eventType: ComponentEvent['type']) => void;
+  inputHandler?: (node: ComponentNode, value: string) => void;
+  /** 空提示文字 */
+  placeholder?: string;
+}>();
+
+const editor = useEditorStore();
+const containerEl = ref<HTMLElement>();
+const dragOver = ref(false);
+
+// 编辑模式：初始化 SortableJS
+// toRef(props, 'children') 返回指向 props.children 的可写 ref，
+// SortableJS 直接操作该数组（splice/push），由于 props.children 是父节点
+// children/slots[slotName] 的引用，修改会同步到父节点。
+if (!props.readonly) {
+  const childrenRef = toRef(props, 'children');
+  useDraggable(containerEl, childrenRef, {
+    animation: 180,
+    group: { name: 'canvas-nodes', pull: true, put: true },
+    ghostClass: 'drag-ghost',
+    chosenClass: 'drag-chosen',
+    dragClass: 'drag-dragging',
+    swapThreshold: 0.65,
+    emptyInsertThreshold: 80,
+    onEnd: () => editor.commitSort(),
+  });
+}
+
+// 物料库原生拖入（HTML5 drag，dataTransfer 带 materialId）
+function onDrop(e: DragEvent): void {
+  const materialId = e.dataTransfer?.getData('application/x-material-id');
+  if (!materialId) return; // 非物料库拖入，交给 SortableJS
+  e.preventDefault();
+  e.stopPropagation();
+  dragOver.value = false;
+  editor.addNode(materialId, undefined, props.parentId, props.slotName || undefined);
+}
+
+function onDragOver(e: DragEvent): void {
+  if (!e.dataTransfer?.types.includes('application/x-material-id')) return;
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect = 'copy';
+  dragOver.value = true;
+}
+
+function onDragLeave(): void {
+  dragOver.value = false;
+}
+</script>
+
+<template>
+  <div
+    ref="containerEl"
+    class="container-list"
+    :class="{ empty: children.length === 0, 'drop-active': dragOver }"
+    @drop="onDrop"
+    @dragover="onDragOver"
+    @dragleave="onDragLeave"
+  >
+    <NodeWrapper
+      v-for="child in children"
+      :key="child.id"
+      :node="child"
+      :readonly="readonly"
+      :event-handler="eventHandler"
+      :input-handler="inputHandler"
+    />
+    <div v-if="children.length === 0 && !readonly" class="drop-hint">
+      {{ placeholder ?? '拖入组件' }}
+    </div>
+  </div>
+</template>
+
+<style scoped lang="scss">
+.container-list {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 80px;
+  padding: 4px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  &.drop-active {
+    background: var(--color-primary-light);
+    border-color: var(--color-primary);
+  }
+
+  .drop-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    color: var(--color-text-4);
+    pointer-events: none;
+  }
+}
+</style>

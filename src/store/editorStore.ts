@@ -39,18 +39,25 @@ export const useEditorStore = defineStore('editor', () => {
     () => pages.value.findIndex((p) => p.id === activePageId.value),
   );
 
-  // ===== 递归查找（支持容器嵌套） =====
-  /** 按 id 递归查找节点（默认从当前页顶层 nodes 查起） */
+  // ===== 递归查找（支持容器嵌套 + 命名 slot） =====
+  /** 按 id 递归查找节点（默认从当前页顶层 nodes 查起，搜索 children 和 slots） */
   function findNodeById(id: string, list: ComponentNode[] = nodes.value): ComponentNode | null {
     for (const n of list) {
       if (n.id === id) return n;
       const found = findNodeById(id, n.children);
       if (found) return found;
+      // 搜索命名 slot
+      if (n.slots) {
+        for (const slotChildren of Object.values(n.slots)) {
+          const slotFound = findNodeById(id, slotChildren);
+          if (slotFound) return slotFound;
+        }
+      }
     }
     return null;
   }
 
-  /** 查找节点所在的位置：所属数组 + 索引 + 父节点（顶层时 parent=null） */
+  /** 查找节点所在的位置：所属数组 + 索引 + 父节点（顶层时 parent=null，搜索 children 和 slots） */
   function findNodeLocation(
     id: string,
     list: ComponentNode[] = nodes.value,
@@ -60,8 +67,31 @@ export const useEditorStore = defineStore('editor', () => {
       if (list[i].id === id) return { list, index: i, parent };
       const childLoc = findNodeLocation(id, list[i].children, list[i]);
       if (childLoc) return childLoc;
+      // 搜索命名 slot（用局部变量避免 TS 类型收窄失败）
+      const slots = list[i].slots;
+      if (slots) {
+        for (const slotChildren of Object.values(slots)) {
+          const slotLoc = findNodeLocation(id, slotChildren, list[i]);
+          if (slotLoc) return slotLoc;
+        }
+      }
     }
     return null;
+  }
+
+  /** 确保节点的 slots 字段存在且包含指定的 slot 名称（面板数量变化时同步增删） */
+  function ensureSlots(nodeId: string, slotNames: string[]): void {
+    const node = findNodeById(nodeId);
+    if (!node) return;
+    if (!node.slots) node.slots = {};
+    // 添加新 slot
+    for (const name of slotNames) {
+      if (!node.slots[name]) node.slots[name] = [];
+    }
+    // 删除旧 slot（面板数量减少时）
+    for (const oldName of Object.keys(node.slots)) {
+      if (!slotNames.includes(oldName)) delete node.slots[oldName];
+    }
   }
 
   const selectedNode = computed<ComponentNode | null>(
@@ -162,8 +192,13 @@ export const useEditorStore = defineStore('editor', () => {
     future.value = [];
   }
 
-  /** 新增组件：parentId 存在时挂到该容器的 children，否则加到当前页顶层 */
-  function addNode(materialId: string, index?: number, parentId?: string): ComponentNode | null {
+  /** 新增组件：parentId+slotName 存在时挂到该容器的命名 slot，parentId 存在时挂到 children，否则加到顶层 */
+  function addNode(
+    materialId: string,
+    index?: number,
+    parentId?: string,
+    slotName?: string,
+  ): ComponentNode | null {
     const meta = materialRegistry[materialId];
     if (!meta) return null;
     commit();
@@ -180,8 +215,17 @@ export const useEditorStore = defineStore('editor', () => {
     if (parentId) {
       const parent = findNodeById(parentId);
       if (parent) {
-        if (typeof index === 'number') parent.children.splice(index, 0, node);
-        else parent.children.push(node);
+        // 有 slotName：加到命名 slot
+        if (slotName) {
+          if (!parent.slots) parent.slots = {};
+          if (!parent.slots[slotName]) parent.slots[slotName] = [];
+          if (typeof index === 'number') parent.slots[slotName].splice(index, 0, node);
+          else parent.slots[slotName].push(node);
+        } else {
+          // 无 slotName：加到默认 children
+          if (typeof index === 'number') parent.children.splice(index, 0, node);
+          else parent.children.push(node);
+        }
       }
     } else {
       if (typeof index === 'number') nodes.value.splice(index, 0, node);
@@ -498,6 +542,7 @@ export const useEditorStore = defineStore('editor', () => {
     canUndo,
     canRedo,
     addNode,
+    ensureSlots,
     selectNode,
     removeNode,
     duplicateNode,

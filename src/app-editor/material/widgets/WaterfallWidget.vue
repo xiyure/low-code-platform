@@ -47,38 +47,50 @@ const gapVal = computed(() => props.gap ?? 12);
 </script>
 
 <template>
-  <div class="mat-waterfall" :style="{ gap: gapVal + 'px' }">
-    <div
-      v-for="(col, ci) in columnsData"
-      :key="ci"
-      class="waterfall-col"
-      :style="{ gap: gapVal + 'px' }"
-    >
+  <div class="mat-waterfall-wrap">
+    <div class="mat-waterfall" :style="{ gap: gapVal + 'px' }">
       <div
-        v-for="(item, i) in col"
-        :key="i"
-        class="waterfall-card"
+        v-for="(col, ci) in columnsData"
+        :key="ci"
+        class="waterfall-col"
+        :style="{ gap: gapVal + 'px' }"
       >
         <div
-          class="waterfall-image"
-          :style="{ height: (item.height ?? 140) + 'px' }"
+          v-for="(item, i) in col"
+          :key="i"
+          class="waterfall-card"
         >
-          <img v-if="item.image" :src="item.image" />
-          <span v-else>图</span>
+          <div
+            class="waterfall-image"
+            :style="{ height: (item.height ?? 140) + 'px' }"
+          >
+            <img v-if="item.image" :src="item.image" />
+            <span v-else>图</span>
+          </div>
+          <div class="waterfall-title">{{ item.title }}</div>
         </div>
-        <div class="waterfall-title">{{ item.title }}</div>
       </div>
     </div>
+    <!-- 自定义内容区：可拖入子组件 -->
+    <slot />
   </div>
 </template>
 
 <style scoped lang="scss">
-.mat-waterfall {
+.mat-waterfall-wrap {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
   width: 100%;
+  min-height: 80px;
   padding: 8px;
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-md);
+}
+
+.mat-waterfall {
+  display: flex;
+  width: 100%;
 
   .waterfall-col {
     display: flex;

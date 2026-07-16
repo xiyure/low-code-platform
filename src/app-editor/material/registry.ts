@@ -291,6 +291,7 @@ export const materialRegistry: Record<string, MaterialMeta> = {
     name: '纵向列表',
     group: 'layout',
     icon: 'List',
+    isContainer: true,
     defaultProps: {
       items: '[{"title":"列表项一","desc":"这是列表项描述","image":""},{"title":"列表项二","desc":"这是列表项描述","image":""},{"title":"列表项三","desc":"这是列表项描述","image":""}]',
       gap: 8,
@@ -317,6 +318,7 @@ export const materialRegistry: Record<string, MaterialMeta> = {
     name: '横向列表',
     group: 'layout',
     icon: 'Document',
+    isContainer: true,
     defaultProps: {
       items: '[{"title":"卡片一","image":""},{"title":"卡片二","image":""},{"title":"卡片三","image":""}]',
       gap: 12,
@@ -343,6 +345,7 @@ export const materialRegistry: Record<string, MaterialMeta> = {
     name: '宫格列表',
     group: 'layout',
     icon: 'Grid',
+    isContainer: true,
     defaultProps: {
       items: '[{"title":"宫格一","icon":"Menu","image":""},{"title":"宫格二","icon":"Grid","image":""},{"title":"宫格三","icon":"Picture","image":""},{"title":"宫格四","icon":"Star","image":""}]',
       columns: 3,
@@ -369,6 +372,7 @@ export const materialRegistry: Record<string, MaterialMeta> = {
     name: '瀑布流',
     group: 'layout',
     icon: 'Grid',
+    isContainer: true,
     defaultProps: {
       items: '[{"title":"卡片一","image":"","height":160},{"title":"卡片二","image":"","height":120},{"title":"卡片三","image":"","height":180},{"title":"卡片四","image":"","height":100},{"title":"卡片五","image":"","height":140},{"title":"卡片六","image":"","height":160}]',
       columns: 2,

@@ -52,11 +52,12 @@ const tabPosition = computed<TabPosition>(() => {
         :label="tab.label"
         :name="String(i)"
       >
-        <div class="tab-content">{{ tab.content }}</div>
+        <div class="tab-content">
+          <!-- 仅当前激活的标签页渲染 slot 内容 -->
+          <slot v-if="activeTab === String(i)" />
+        </div>
       </el-tab-pane>
     </el-tabs>
-    <div v-if="$slots.default" class="tabs-slot"><slot /></div>
-    <div v-else class="tabs-placeholder">将组件拖入标签页</div>
   </div>
 </template>
 
@@ -65,25 +66,8 @@ const tabPosition = computed<TabPosition>(() => {
   width: 100%;
 
   .tab-content {
-    padding: 12px;
-    font-size: 13px;
-    color: var(--color-text-2);
-  }
-
-  .tabs-slot {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 8px 0;
-  }
-
-  .tabs-placeholder {
-    padding: 16px;
-    font-size: 13px;
-    color: var(--color-text-4);
-    border: 1px dashed var(--color-border);
-    border-radius: var(--radius-sm);
-    text-align: center;
+    width: 100%;
+    min-height: 80px;
   }
 }
 </style>

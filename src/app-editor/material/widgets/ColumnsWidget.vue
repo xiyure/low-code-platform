@@ -19,21 +19,18 @@ const gapVal = computed(() => props.gap ?? 12);
       background: props.background ?? 'transparent',
     }"
   >
-    <div
-      v-for="i in cols"
-      :key="i"
-      class="mat-col"
-    >
-      <span v-if="!$slots.default" class="col-label">列 {{ i }}</span>
+    <div v-for="i in cols" :key="i" class="mat-col col-placeholder">
+      <span class="col-label">列 {{ i }}</span>
     </div>
-    <div v-if="$slots.default" class="mat-col col-slot"><slot /></div>
-    <div v-if="!$slots.default" class="col-placeholder">将组件拖入分栏</div>
+    <!-- 自定义内容区：全宽，可拖入子组件 -->
+    <slot />
   </div>
 </template>
 
 <style scoped lang="scss">
 .mat-columns {
   display: flex;
+  flex-wrap: wrap;
   width: 100%;
   min-height: 80px;
   padding: 12px;
@@ -45,27 +42,14 @@ const gapVal = computed(() => props.gap ?? 12);
     flex: 1;
     align-items: center;
     justify-content: center;
+    min-width: 80px;
     min-height: 56px;
     background: var(--color-bg-2);
     border-radius: var(--radius-sm);
-
-    .col-label {
-      font-size: 12px;
-      color: var(--color-text-4);
-    }
-  }
-
-  .col-slot {
-    flex: 1;
-    min-width: 0;
   }
 
   .col-placeholder {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--color-text-4);
   }
 }

@@ -11,8 +11,10 @@ export interface ComponentNode {
   style: Record<string, string>;
   /** 尺寸（width 控制流式布局中的宽度，height 仅用于编辑态占位） */
   size: { width: number; height: number };
-  /** 容器型组件的子节点（第一版未启用嵌套画布，保留字段以备后续扩展） */
+  /** 容器型组件的子节点（默认 slot） */
   children: ComponentNode[];
+  /** 命名 slot 子节点（如折叠面板的每个面板），key 为 slot 名称 */
+  slots?: Record<string, ComponentNode[]>;
   /** 事件绑定 */
   events?: ComponentEvent[];
 }

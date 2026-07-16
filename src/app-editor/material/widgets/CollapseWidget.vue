@@ -36,11 +36,16 @@ const collapseItems = computed<CollapseItem[]>(() => {
         :title="item.title"
         :name="String(i)"
       >
-        <div class="collapse-content">{{ item.content }}</div>
+        <div class="collapse-content">
+          <!--
+            每个面板用独立的命名 slot（panel-0, panel-1, ...），
+            NodeWrapper 为每个面板提供独立的 SlotContainer，
+            各面板可独立拖入组件，互不影响。
+          -->
+          <slot :name="'panel-' + i" />
+        </div>
       </el-collapse-item>
     </el-collapse>
-    <div v-if="$slots.default" class="collapse-slot"><slot /></div>
-    <div v-else class="collapse-placeholder">将组件拖入折叠面板</div>
   </div>
 </template>
 
@@ -49,25 +54,11 @@ const collapseItems = computed<CollapseItem[]>(() => {
   width: 100%;
 
   .collapse-content {
-    font-size: 13px;
-    color: var(--color-text-2);
-  }
-
-  .collapse-slot {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 8px;
-  }
-
-  .collapse-placeholder {
-    margin-top: 8px;
-    padding: 16px;
-    font-size: 13px;
-    color: var(--color-text-4);
-    border: 1px dashed var(--color-border);
-    border-radius: var(--radius-sm);
-    text-align: center;
+    width: 100%;
+    min-height: 80px;
+    /* 顶部留白：子组件选中时工具栏位于上方（top: -28px），需确保它不超出
+       el-collapse-item__wrap 的 overflow: hidden 边界，避免被裁剪 */
+    padding-top: 32px;
   }
 }
 </style>

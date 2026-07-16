@@ -17,7 +17,6 @@ defineProps<{
     </template>
     <div class="card-body">
       <slot />
-      <div v-if="!$slots.default" class="card-placeholder">卡片内容区</div>
     </div>
   </el-card>
 </template>
@@ -25,19 +24,17 @@ defineProps<{
 <style scoped lang="scss">
 .mat-card {
   width: 100%;
+  /* 覆盖 el-card 默认 overflow: hidden，避免裁剪子组件选中时上方工具栏（top: -28px） */
+  overflow: visible;
 
   .card-title {
     font-size: 14px;
     font-weight: 600;
   }
 
-  .card-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 60px;
-    font-size: 13px;
-    color: var(--color-text-4);
+  .card-body {
+    width: 100%;
+    min-height: 80px;
   }
 }
 </style>

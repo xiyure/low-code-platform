@@ -239,13 +239,14 @@ async function onRemovePage(pageId: string, name: string): Promise<void> {
     }
   }
 
-  /* 视图切换 Tab（用户界面 / 交互逻辑） */
+  /* 视图切换 Tab（用户界面 / 交互逻辑）—— 水平居中，与 page-tabs 拉开距离 */
   .view-tabs {
     display: flex;
     flex-shrink: 0;
     gap: 0;
     align-items: center;
-    height: 40px;
+    justify-content: center;
+    height: 44px;
     padding: 0 16px;
     background: var(--color-bg-1);
     border-bottom: 1px solid var(--color-border);
@@ -255,7 +256,7 @@ async function onRemovePage(pageId: string, name: string): Promise<void> {
       gap: 6px;
       align-items: center;
       height: 100%;
-      padding: 0 16px;
+      padding: 0 24px;
       font-size: 14px;
       color: var(--color-text-2);
       cursor: pointer;

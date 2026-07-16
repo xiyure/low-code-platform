@@ -40,11 +40,18 @@ onMounted(async () => {
   triggerLoadEvents();
 });
 
-/** 递归触发节点及其子节点的 load 事件 */
+/** 递归触发节点及其子节点的 load 事件（含命名 slot 子节点） */
 function triggerLoadRecursive(node: ComponentNode): void {
   handleEvent(node, 'load');
   for (const child of node.children) {
     triggerLoadRecursive(child);
+  }
+  if (node.slots) {
+    for (const slotChildren of Object.values(node.slots)) {
+      for (const child of slotChildren) {
+        triggerLoadRecursive(child);
+      }
+    }
   }
 }
 
@@ -84,7 +91,7 @@ function switchPage(pageId: string): void {
 /** 当前页运行时状态（只读） */
 const activeState = computed(() => pageStates.value[activePageId.value]);
 
-/** 递归解析节点：替换 {{变量}}，过滤隐藏节点（含子节点） */
+/** 递归解析节点：替换 {{变量}}，过滤隐藏节点（含子节点和命名 slot 子节点） */
 function resolveNode(node: ComponentNode): ComponentNode | null {
   if (!activeState.value || activeState.value.hiddenIds.has(node.id)) return null;
   const values = activeState.value.varValues;
@@ -92,12 +99,22 @@ function resolveNode(node: ComponentNode): ComponentNode | null {
   for (const [k, v] of Object.entries(node.props)) {
     resolvedProps[k] = resolveValue(v, values);
   }
+  // 递归解析命名 slot 子节点
+  const resolvedSlots: Record<string, ComponentNode[]> = {};
+  if (node.slots) {
+    for (const [slotName, slotChildren] of Object.entries(node.slots)) {
+      resolvedSlots[slotName] = slotChildren
+        .map(resolveNode)
+        .filter((n): n is ComponentNode => n !== null);
+    }
+  }
   return {
     ...node,
     props: resolvedProps,
     children: node.children
       .map(resolveNode)
       .filter((n): n is ComponentNode => n !== null),
+    slots: Object.keys(resolvedSlots).length ? resolvedSlots : undefined,
   };
 }
 

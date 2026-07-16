@@ -43,6 +43,8 @@ const listItems = computed<ListItem[]>(() => {
         <div v-if="item.desc" class="vlist-desc">{{ item.desc }}</div>
       </div>
     </div>
+    <!-- 自定义内容区：可拖入子组件 -->
+    <slot />
   </div>
 </template>
 
@@ -51,6 +53,7 @@ const listItems = computed<ListItem[]>(() => {
   display: flex;
   flex-direction: column;
   width: 100%;
+  min-height: 80px;
   padding: 8px;
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-md);

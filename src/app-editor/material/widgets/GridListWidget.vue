@@ -36,31 +36,43 @@ const gapVal = computed(() => props.gap ?? 12);
 </script>
 
 <template>
-  <div
-    class="mat-grid-list"
-    :style="{
-      gridTemplateColumns: `repeat(${cols}, 1fr)`,
-      gap: gapVal + 'px',
-    }"
-  >
-    <div v-for="(item, i) in listItems" :key="i" class="grid-item">
-      <div class="grid-icon">
-        <img v-if="item.image" :src="item.image" />
-        <el-icon v-else-if="item.icon"><component :is="item.icon" /></el-icon>
-        <span v-else>图</span>
+  <div class="mat-grid-list-wrap">
+    <div
+      class="mat-grid-list"
+      :style="{
+        gridTemplateColumns: `repeat(${cols}, 1fr)`,
+        gap: gapVal + 'px',
+      }"
+    >
+      <div v-for="(item, i) in listItems" :key="i" class="grid-item">
+        <div class="grid-icon">
+          <img v-if="item.image" :src="item.image" />
+          <el-icon v-else-if="item.icon"><component :is="item.icon" /></el-icon>
+          <span v-else>图</span>
+        </div>
+        <div class="grid-title">{{ item.title }}</div>
       </div>
-      <div class="grid-title">{{ item.title }}</div>
     </div>
+    <!-- 自定义内容区：可拖入子组件 -->
+    <slot />
   </div>
 </template>
 
 <style scoped lang="scss">
-.mat-grid-list {
-  display: grid;
+.mat-grid-list-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   width: 100%;
+  min-height: 80px;
   padding: 8px;
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-md);
+}
+
+.mat-grid-list {
+  display: grid;
+  width: 100%;
 
   .grid-item {
     display: flex;

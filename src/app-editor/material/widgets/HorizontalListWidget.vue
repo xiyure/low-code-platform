@@ -48,6 +48,8 @@ const listItems = computed<CardItem[]>(() => {
       </div>
       <div class="hlist-title">{{ item.title }}</div>
     </div>
+    <!-- 自定义内容区：可拖入子组件 -->
+    <slot />
   </div>
 </template>
 
@@ -55,6 +57,7 @@ const listItems = computed<CardItem[]>(() => {
 .mat-hlist {
   display: flex;
   width: 100%;
+  min-height: 80px;
   padding: 8px;
   overflow-x: auto;
   border: 1px dashed var(--color-border);

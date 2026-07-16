@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import draggable from 'vuedraggable';
+import { computed, watch } from 'vue';
 import type { ComponentNode, ComponentEvent } from '@/types';
 import { useEditorStore } from '@/store/editorStore';
 import { materialRegistry } from '@/app-editor/material/registry';
 import ComponentRenderer from '@/app-editor/material/ComponentRenderer.vue';
+import SlotContainer from './SlotContainer.vue';
 import { Delete, CopyDocument, Top, Bottom } from '@element-plus/icons-vue';
 
 defineOptions({ name: 'NodeWrapper' });
@@ -22,15 +22,51 @@ const editor = useEditorStore();
 
 const isContainer = computed(() => !!materialRegistry[props.node.componentId]?.isContainer);
 const selected = computed(() => !props.readonly && editor.selectedId === props.node.id);
-const dragOver = ref(false);
+
+// ===== 多 slot 支持（折叠面板等） =====
+// 对于有多 slot 的容器组件（如折叠面板），根据 props.items 生成 slot 名称列表。
+// 每个面板对应一个命名 slot（panel-0, panel-1, ...），可独立拖入组件。
+function parseSlotCount(node: ComponentNode): number {
+  if (node.componentId === 'collapse') {
+    const raw = node.props.items;
+    if (Array.isArray(raw) && raw.length) return raw.length;
+    if (typeof raw === 'string' && raw.trim()) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length) return parsed.length;
+      } catch {
+        // 解析失败
+      }
+    }
+    return 2; // 默认 2 个面板
+  }
+  return 0;
+}
+
+const slotNames = computed<string[]>(() => {
+  const count = parseSlotCount(props.node);
+  return Array.from({ length: count }, (_, i) => 'panel-' + i);
+});
+
+const hasSlots = computed(() => slotNames.value.length > 0);
+
+// 确保 node.slots 存在且每个 slotName 有对应数组（面板数量变化时同步增删）
+// 通过 editorStore.ensureSlots 修改，避免直接 mutating props
+watch(
+  slotNames,
+  (names) => {
+    if (props.readonly || names.length === 0) return;
+    editor.ensureSlots(props.node.id, names);
+  },
+  { immediate: true },
+);
 
 // ===== 选中（编辑模式）/ 事件透传（预览模式） =====
 function onClick(e: MouseEvent): void {
+  e.stopPropagation();
   if (props.readonly) {
-    e.stopPropagation();
     props.eventHandler?.(props.node, 'click');
   } else {
-    e.stopPropagation();
     editor.selectNode(props.node.id);
   }
 }
@@ -65,40 +101,29 @@ function onChange(e: Event): void {
   props.eventHandler?.(props.node, 'change');
 }
 
-// ===== vuedraggable 跨列表拖拽（编辑模式） =====
-const dragOptions = {
-  animation: 180,
-  group: { name: 'canvas-nodes', pull: true, put: true },
-  ghostClass: 'drag-ghost',
-  chosenClass: 'drag-chosen',
-  dragClass: 'drag-dragging',
-};
-
-/** 拖拽结束：提交历史（跨列表时由源列表触发一次） */
-function onDragEnd(): void {
-  editor.commitSort();
-}
-
-// ===== 物料库原生拖入容器（编辑模式） =====
-function onContainerDrop(e: DragEvent): void {
-  const materialId = e.dataTransfer?.getData('application/x-material-id');
-  if (!materialId) return; // 非物料库拖入，交给 vuedraggable
-  e.preventDefault();
-  e.stopPropagation();
-  dragOver.value = false;
-  editor.addNode(materialId, undefined, props.node.id);
-}
-
+// ===== 容器整体拖入（解决列表类组件拖拽） =====
+// 列表类组件（vlist/hlist/gridlist/waterfall）的 <slot /> 在列表项下方，
+// 拖到列表项区域时 dragover 事件不会触发 SlotContainer 的 onDragOver（事件不向上冒泡到子元素）。
+// 因此在 NodeWrapper 最外层 div 上绑定 dragover/drop，
+// 让整个容器区域都接受物料库拖入。SlotContainer 自身的 onDrop 已 stopPropagation，不会重复触发。
 function onContainerDragOver(e: DragEvent): void {
+  if (props.readonly) return;
+  // 仅非多 slot 的容器型节点生效（多 slot 容器如折叠面板由各面板的 SlotContainer 处理）
+  if (!isContainer.value || hasSlots.value) return;
   if (!e.dataTransfer?.types.includes('application/x-material-id')) return;
   e.preventDefault();
   e.stopPropagation();
   e.dataTransfer.dropEffect = 'copy';
-  dragOver.value = true;
 }
 
-function onContainerDragLeave(): void {
-  dragOver.value = false;
+function onContainerDrop(e: DragEvent): void {
+  if (props.readonly) return;
+  if (!isContainer.value || hasSlots.value) return;
+  const materialId = e.dataTransfer?.getData('application/x-material-id');
+  if (!materialId) return;
+  e.preventDefault();
+  e.stopPropagation();
+  editor.addNode(materialId, undefined, props.node.id);
 }
 
 // ===== 尺寸拉伸（编辑模式，右下角） =====
@@ -143,7 +168,7 @@ function onResizeEnd(): void {
 <template>
   <div
     class="node-wrapper"
-    :class="{ selected, 'is-container': isContainer, 'drop-active': dragOver, readonly }"
+    :class="{ selected, 'is-container': isContainer, readonly }"
     :style="{ width: node.size.width + 'px' }"
     @click="onClick"
     @dblclick="onDblClick"
@@ -151,59 +176,53 @@ function onResizeEnd(): void {
     @mouseleave="onMouseLeave"
     @input="onInput"
     @change="onChange"
+    @dragover="onContainerDragOver"
+    @drop="onContainerDrop"
   >
     <ComponentRenderer :node="node">
-      <template v-if="isContainer">
-        <!-- 预览模式：递归渲染子节点，无拖拽 -->
-        <template v-if="readonly">
-          <NodeWrapper
-            v-for="child in node.children"
-            :key="child.id"
-            :node="child"
-            readonly
-            :event-handler="eventHandler"
-            :input-handler="inputHandler"
-          />
-        </template>
-        <!-- 编辑模式：容器内嵌 vuedraggable，与顶层同 group，支持跨层拖拽与排序 -->
-        <div
-          v-else
-          class="container-zone"
-          :class="{ empty: node.children.length === 0, 'drop-active': dragOver }"
-          @drop="onContainerDrop"
-          @dragover="onContainerDragOver"
-          @dragleave="onContainerDragLeave"
-        >
-          <draggable
-            :list="node.children"
-            v-bind="dragOptions"
-            item-key="id"
-            class="container-list"
-            @end="onDragEnd"
-          >
-            <template #item="{ element }">
-              <NodeWrapper :node="element" />
-            </template>
-          </draggable>
-          <div v-if="node.children.length === 0" class="drop-hint">将组件拖入{{ node.name }}</div>
-        </div>
+      <!-- 多 slot 容器（折叠面板）：为每个面板渲染独立的 SlotContainer -->
+      <template v-for="slotName in slotNames" :key="slotName" #[slotName]>
+        <SlotContainer
+          :children="node.slots?.[slotName] ?? []"
+          :parent-id="node.id"
+          :slot-name="slotName"
+          :readonly="readonly"
+          :event-handler="eventHandler"
+          :input-handler="inputHandler"
+          placeholder="拖入组件"
+        />
+      </template>
+
+      <!-- 默认 slot（普通容器：container/card/columns/列表类） -->
+      <template v-if="isContainer && !hasSlots">
+        <SlotContainer
+          :children="node.children"
+          :parent-id="node.id"
+          :readonly="readonly"
+          :event-handler="eventHandler"
+          :input-handler="inputHandler"
+          :placeholder="`拖入组件到${node.name}`"
+        />
       </template>
     </ComponentRenderer>
 
-    <!-- 编辑态工具栏 -->
-    <div v-if="!readonly && selected" class="node-toolbar" @click.stop @mousedown.stop>
-      <el-button class="tool-btn" text size="small" title="上移" @click="editor.moveUp(node.id)">
-        <el-icon><Top /></el-icon>
-      </el-button>
-      <el-button class="tool-btn" text size="small" title="下移" @click="editor.moveDown(node.id)">
-        <el-icon><Bottom /></el-icon>
-      </el-button>
-      <el-button class="tool-btn" text size="small" title="复制" @click="editor.duplicateNode(node.id)">
-        <el-icon><CopyDocument /></el-icon>
-      </el-button>
-      <el-button class="tool-btn danger" text size="small" title="删除" @click="editor.removeNode(node.id)">
-        <el-icon><Delete /></el-icon>
-      </el-button>
+    <!-- 编辑态：选中时显示工具栏 -->
+    <div v-if="!readonly && selected" class="node-topbar" @click.stop @mousedown.stop>
+      <span class="topbar-name">{{ node.name }}</span>
+      <div class="topbar-actions">
+        <el-button class="tool-btn" text size="small" title="上移" @click="editor.moveUp(node.id)">
+          <el-icon><Top /></el-icon>
+        </el-button>
+        <el-button class="tool-btn" text size="small" title="下移" @click="editor.moveDown(node.id)">
+          <el-icon><Bottom /></el-icon>
+        </el-button>
+        <el-button class="tool-btn" text size="small" title="复制" @click="editor.duplicateNode(node.id)">
+          <el-icon><CopyDocument /></el-icon>
+        </el-button>
+        <el-button class="tool-btn danger" text size="small" title="删除" @click="editor.removeNode(node.id)">
+          <el-icon><Delete /></el-icon>
+        </el-button>
+      </div>
     </div>
 
     <!-- 拉伸手柄：选中时显示，仅右下角 -->
@@ -230,6 +249,8 @@ function onResizeEnd(): void {
   }
 
   &.selected {
+    /* 选中节点整体提升层级，确保容器内子组件的工具栏/手柄不被容器遮挡 */
+    z-index: 100;
     border-color: var(--color-primary);
     box-shadow: 0 0 0 2px var(--color-primary-light);
   }
@@ -250,59 +271,39 @@ function onResizeEnd(): void {
     background: transparent;
   }
 
-  /* 容器内拖放区：既是 vuedraggable 容器，也是物料库原生 drop 区 */
-  .container-zone {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-height: 56px;
-    padding: 6px;
-    border: 1px dashed var(--color-border);
-    border-radius: var(--radius-sm);
-    transition: background 0.15s, border-color 0.15s;
-
-    &.empty {
-      align-items: center;
-      justify-content: center;
-    }
-
-    &.drop-active {
-      background: var(--color-primary-light);
-      border-color: var(--color-primary);
-    }
-
-    .container-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-height: 24px;
-    }
-
-    .drop-hint {
-      position: absolute;
-      font-size: 12px;
-      color: var(--color-text-4);
-      pointer-events: none;
-    }
-  }
-
-  .node-toolbar {
+  /* 顶部工具栏（选中时显示）：z-index 远高于节点本身，确保在选中节点的层叠上下文内始终最上层 */
+  .node-topbar {
     position: absolute;
-    top: -36px;
-    right: 0;
-    z-index: 20;
+    top: -28px;
+    left: 0;
+    z-index: 1000;
     display: flex;
-    gap: 2px;
+    gap: 4px;
     align-items: center;
-    padding: 2px;
+    height: 26px;
+    padding: 0 4px;
     background: var(--color-bg-1);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-primary);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-sm);
 
+    .topbar-name {
+      max-width: 100px;
+      font-size: 12px;
+      color: var(--color-text-2);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .topbar-actions {
+      display: flex;
+      gap: 1px;
+    }
+
     .tool-btn {
-      width: 26px;
-      height: 26px;
+      width: 24px;
+      height: 22px;
       padding: 0;
       color: var(--color-text-2);
       transition:
@@ -321,10 +322,10 @@ function onResizeEnd(): void {
     }
   }
 
-  /* 拉伸手柄（仅右下角） */
+  /* 拉伸手柄（仅右下角）：与 topbar 同层级，确保始终可点 */
   .resize-handle {
     position: absolute;
-    z-index: 21;
+    z-index: 1001;
     background: var(--color-primary);
     border: 2px solid var(--color-bg-1);
     border-radius: 3px;

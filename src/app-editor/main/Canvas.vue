@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import draggable from 'vuedraggable';
+import { VueDraggable } from 'vue-draggable-plus';
 import { useEditorStore } from '@/store/editorStore';
 import NodeWrapper from './NodeWrapper.vue';
 import { Plus } from '@element-plus/icons-vue';
@@ -22,29 +22,33 @@ function onKeydown(e: KeyboardEvent): void {
 onMounted(() => window.addEventListener('keydown', onKeydown));
 onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 
+// 与 NodeWrapper 的 dragOptions 保持一致（同 group 实现跨列表拖拽）
+// emptyInsertThreshold: 80 让空容器也能可靠拖入（默认 5 太小）
 const dragOptions = {
   animation: 180,
   group: { name: 'canvas-nodes', pull: true, put: true },
   ghostClass: 'drag-ghost',
   chosenClass: 'drag-chosen',
   dragClass: 'drag-dragging',
+  swapThreshold: 0.65,
+  emptyInsertThreshold: 80,
 };
 
-/** vuedraggable 拖拽结束：提交一次历史用于撤销（跨列表时由源列表触发一次） */
+/** VueDraggable 拖拽结束：提交一次历史用于撤销 */
 function onDragEnd(): void {
   editor.commitSort();
 }
 
-/** 从左侧物料库拖入画布顶层（原生 HTML5 拖拽，与 vuedraggable 互不影响） */
+/** 从左侧物料库拖入画布顶层（原生 HTML5 拖拽，与 VueDraggable 互不影响） */
 function onDrop(e: DragEvent): void {
   const materialId = e.dataTransfer?.getData('application/x-material-id');
-  if (!materialId) return; // 非物料库拖入（vuedraggable 排序），交给 vuedraggable 处理
+  if (!materialId) return; // 非物料库拖入（VueDraggable 排序），交给 VueDraggable 处理
   e.preventDefault();
   editor.addNode(materialId);
 }
 
 function onDragOver(e: DragEvent): void {
-  // 仅在物料库拖入时放行（vuedraggable 拖拽时 dataTransfer 无此 key，但其自身会处理 dragover）
+  // 仅在物料库拖入时放行（VueDraggable 拖拽时 dataTransfer 无此 key，但其自身会处理 dragover）
   if (!e.dataTransfer?.types.includes('application/x-material-id')) return;
   e.preventDefault();
   e.dataTransfer.dropEffect = 'copy';
@@ -71,18 +75,19 @@ function clearSelect(): void {
           <p class="empty-sub">组件将按顺序自上而下排列</p>
         </div>
 
-        <draggable
+        <VueDraggable
           v-else
-          :list="editor.nodes"
+          v-model="editor.nodes"
           v-bind="dragOptions"
-          item-key="id"
           class="flow-list"
           @end="onDragEnd"
         >
-          <template #item="{ element }">
-            <NodeWrapper :node="element" />
-          </template>
-        </draggable>
+          <NodeWrapper
+            v-for="node in editor.nodes"
+            :key="node.id"
+            :node="node"
+          />
+        </VueDraggable>
       </div>
     </div>
   </div>

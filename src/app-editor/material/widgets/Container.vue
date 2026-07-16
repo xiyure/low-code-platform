@@ -22,7 +22,6 @@ const props = defineProps<{
     }"
   >
     <slot />
-    <div v-if="!$slots.default" class="container-placeholder">将组件拖入容器</div>
   </div>
 </template>
 
@@ -34,14 +33,5 @@ const props = defineProps<{
   min-height: 80px;
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-md);
-
-  .container-placeholder {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    color: var(--color-text-4);
-  }
 }
 </style>
