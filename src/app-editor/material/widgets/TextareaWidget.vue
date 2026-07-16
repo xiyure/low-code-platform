@@ -6,10 +6,8 @@ const props = defineProps<{
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
-  clearable?: boolean;
+  rows?: number;
   maxlength?: number;
-  prefix?: string;
-  suffix?: string;
   defaultValue?: string;
 }>();
 
@@ -24,26 +22,23 @@ defineExpose({
 </script>
 
 <template>
-  <div class="mat-input">
-    <label v-if="props.label" class="field-label">
-      {{ props.label }}<span v-if="props.required" class="required-mark">*</span>
+  <div class="mat-textarea">
+    <label v-if="label" class="field-label">
+      {{ label }}<span v-if="required" class="required-mark">*</span>
     </label>
     <el-input
       v-model="value"
-      :placeholder="props.placeholder ?? '请输入'"
-      :disabled="props.disabled"
-      :clearable="props.clearable"
-      :maxlength="props.maxlength && props.maxlength > 0 ? props.maxlength : undefined"
-      :show-word-limit="!!(props.maxlength && props.maxlength > 0)"
-    >
-      <template v-if="props.prefix" #prepend>{{ props.prefix }}</template>
-      <template v-if="props.suffix" #append>{{ props.suffix }}</template>
-    </el-input>
+      type="textarea"
+      :rows="rows ?? 3"
+      :maxlength="maxlength"
+      :placeholder="placeholder ?? '请输入'"
+      :disabled="disabled"
+    />
   </div>
 </template>
 
 <style scoped>
-.mat-input {
+.mat-textarea {
   display: flex;
   flex-direction: column;
   gap: 6px;

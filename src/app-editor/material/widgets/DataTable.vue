@@ -1,47 +1,43 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-const props = defineProps<{ columns?: number; rows?: number }>();
+const props = defineProps<{
+  columns?: number;
+  rows?: number;
+  stripe?: boolean;
+  border?: boolean;
+  size?: string;
+}>();
+
 const cols = computed(() => props.columns ?? 3);
 const rws = computed(() => props.rows ?? 3);
+
+const colLabels = computed(() =>
+  Array.from({ length: cols.value }, (_, i) => `列${i + 1}`),
+);
 </script>
 
 <template>
-  <table class="mat-table">
-    <thead>
-      <tr>
-        <th v-for="c in cols" :key="c">列 {{ c }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="r in rws" :key="r">
-        <td v-for="c in cols" :key="c">单元格 {{ r }}-{{ c }}</td>
-      </tr>
-    </tbody>
-  </table>
+  <el-table
+    :data="Array.from({ length: rws }, (_, r) => ({ row: r + 1 }))"
+    :stripe="props.stripe"
+    :border="props.border"
+    :size="(props.size as any) ?? 'default'"
+    class="mat-table"
+  >
+    <el-table-column
+      v-for="(label, i) in colLabels"
+      :key="i"
+      :label="label"
+      :prop="`col${i}`"
+    >
+      <template #default="{ row }">单元格 {{ row.row }}-{{ i + 1 }}</template>
+    </el-table-column>
+  </el-table>
 </template>
 
 <style scoped>
 .mat-table {
   width: 100%;
-  font-size: 13px;
-  border-collapse: collapse;
-}
-
-.mat-table th,
-.mat-table td {
-  padding: 8px 12px;
-  text-align: left;
-  border: 1px solid var(--color-border);
-}
-
-.mat-table th {
-  font-weight: 600;
-  color: var(--color-text-2);
-  background: var(--color-bg-2);
-}
-
-.mat-table td {
-  color: var(--color-text-2);
 }
 </style>

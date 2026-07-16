@@ -1,14 +1,19 @@
 <script setup lang="ts">
-defineProps<{ src?: string; alt?: string; radius?: number }>();
+const props = defineProps<{
+  src?: string;
+  alt?: string;
+  fit?: 'fill' | 'cover' | 'contain' | 'none';
+  radius?: number;
+}>();
 </script>
 
 <template>
-  <div class="mat-image">
+  <div class="mat-image" :style="{ borderRadius: (props.radius ?? 8) + 'px' }">
     <img
-      v-if="src"
-      :src="src"
-      :alt="alt ?? '图片'"
-      :style="{ borderRadius: (radius ?? 8) + 'px' }"
+      v-if="props.src"
+      :src="props.src"
+      :alt="props.alt ?? '图片'"
+      :style="{ objectFit: props.fit ?? 'cover' }"
     />
     <div v-else class="image-placeholder">
       <span>图片占位</span>
@@ -27,7 +32,6 @@ defineProps<{ src?: string; alt?: string; radius?: number }>();
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
 }
 
 .image-placeholder {

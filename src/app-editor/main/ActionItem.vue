@@ -24,6 +24,9 @@ const actionOptions: { label: string; value: EventActionType }[] = [
   { label: '显示组件', value: 'showComponent' },
   { label: '隐藏组件', value: 'hideComponent' },
   { label: '切换显隐', value: 'toggleComponent' },
+  { label: '打开弹窗', value: 'openModal' },
+  { label: '关闭弹窗', value: 'closeModal' },
+  { label: '调用工作流', value: 'callWorkflow' },
 ];
 
 const msgTypeOptions = [
@@ -183,6 +186,36 @@ function insertVar(field: 'messageText' | 'variableValue', name: string): void {
         />
       </el-select>
       <div v-if="editor.pages.length <= 1" class="action-tip">当前应用只有 1 个页面，请新建页面后再使用此动作</div>
+    </template>
+
+    <!-- 打开/关闭弹窗：弹窗物料在第二批，暂用文本输入 modalId -->
+    <template v-else-if="action.action === 'openModal' || action.action === 'closeModal'">
+      <el-input
+        :model-value="action.config?.modalId ?? ''"
+        size="small"
+        placeholder="弹窗组件 id（弹窗物料将在第二批提供）"
+        @update:model-value="(v) => updateConfig({ modalId: String(v) })"
+      />
+      <div class="action-tip">弹窗物料尚未引入，可先填写 id 占位，待弹窗组件上线后改为下拉选择</div>
+    </template>
+
+    <!-- 调用工作流：保留类型，执行逻辑待后端接入 -->
+    <template v-else-if="action.action === 'callWorkflow'">
+      <el-input
+        :model-value="action.config?.workflowId ?? ''"
+        size="small"
+        placeholder="工作流 id"
+        @update:model-value="(v) => updateConfig({ workflowId: String(v) })"
+      />
+      <el-input
+        :model-value="action.config?.workflowParams ?? ''"
+        type="textarea"
+        :rows="3"
+        size="small"
+        placeholder='入参 JSON，支持 {{变量名}}，如 {"q":"{{$self}}"}'
+        @update:model-value="(v) => updateConfig({ workflowParams: String(v) })"
+      />
+      <div class="action-tip">该动作为保留类型，预览时仅提示调用，实际执行逻辑待后端接入</div>
     </template>
   </div>
 </template>

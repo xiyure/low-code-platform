@@ -35,7 +35,10 @@ export type EventActionType =
   | 'showComponent'
   | 'hideComponent'
   | 'toggleComponent'
-  | 'switchPage';
+  | 'switchPage'
+  | 'openModal'
+  | 'closeModal'
+  | 'callWorkflow';
 
 /** 事件动作配置（按 action 取用对应字段） */
 export interface EventActionConfig {
@@ -53,6 +56,12 @@ export interface EventActionConfig {
   targetId?: string;
   /** switchPage：目标页面 id */
   pageId?: string;
+  /** openModal/closeModal：目标弹窗组件 id */
+  modalId?: string;
+  /** callWorkflow：工作流 id（当前保留类型，执行逻辑待后端接入） */
+  workflowId?: string;
+  /** callWorkflow：工作流入参（JSON 字符串，支持 {{变量名}}） */
+  workflowParams?: string;
 }
 
 /** 单个响应动作（一个事件可挂多个动作，按序执行） */
@@ -65,7 +74,16 @@ export interface EventAction {
 
 /** 组件事件绑定：一个触发事件 → 多个响应动作 */
 export interface ComponentEvent {
-  type: 'click' | 'change' | 'submit' | 'focus' | 'blur';
+  type:
+    | 'load'
+    | 'click'
+    | 'doubleClick'
+    | 'mouseEnter'
+    | 'mouseLeave'
+    | 'submit'
+    | 'focus'
+    | 'blur'
+    | 'change';
   actions: EventAction[];
 }
 
@@ -73,14 +91,27 @@ export interface ComponentEvent {
 export interface PropertyField {
   key: string;
   label: string;
-  type: 'input' | 'textarea' | 'select' | 'switch' | 'number' | 'color';
+  type:
+    | 'input'
+    | 'textarea'
+    | 'select'
+    | 'switch'
+    | 'number'
+    | 'color'
+    | 'slider'
+    | 'iconPicker'
+    | 'optionsEditor';
   options?: { label: string; value: string | number | boolean }[];
   default?: unknown;
   group?: 'props' | 'style' | 'event';
+  /** slider 类型的最小/最大/步长 */
+  min?: number;
+  max?: number;
+  step?: number;
 }
 
-/** 物料分组 */
-export type MaterialGroup = 'container' | 'form' | 'display';
+/** 物料分组（参照扣子：布局/输入/展示/自定义） */
+export type MaterialGroup = 'layout' | 'input' | 'display' | 'custom';
 
 /** 物料元信息 */
 export interface MaterialMeta {
@@ -95,6 +126,8 @@ export interface MaterialMeta {
   supportEvents: ComponentEvent['type'][];
   /** 属性面板配置 */
   propertySchema: PropertyField[];
+  /** 是否容器型（可拖入子组件） */
+  isContainer?: boolean;
 }
 
 /** 应用页面：每页独立维护组件树与变量 */

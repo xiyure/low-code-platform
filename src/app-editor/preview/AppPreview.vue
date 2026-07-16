@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { spaceApi } from '@/space/infrastructure/spaceApi';
-import ComponentRenderer from '@/app-editor/material/ComponentRenderer.vue';
+import NodeWrapper from '@/app-editor/main/NodeWrapper.vue';
 import { ElMessage } from 'element-plus';
 import { ArrowLeft, HomeFilled } from '@element-plus/icons-vue';
 import type { AppListItem, AppPage, ComponentNode, ComponentEvent, EventActionConfig } from '@/types';
@@ -35,7 +35,26 @@ onMounted(async () => {
   app.value = JSON.parse(JSON.stringify(data));
   activePageId.value = data.homePageId || data.pages[0]?.id || '';
   ensurePageState(activePageId.value);
+  // 首屏渲染后触发所有节点的 load 事件
+  await nextTick();
+  triggerLoadEvents();
 });
+
+/** 递归触发节点及其子节点的 load 事件 */
+function triggerLoadRecursive(node: ComponentNode): void {
+  handleEvent(node, 'load');
+  for (const child of node.children) {
+    triggerLoadRecursive(child);
+  }
+}
+
+/** 触发当前页所有节点（含嵌套子节点）的 load 事件 */
+function triggerLoadEvents(): void {
+  if (!activePage.value) return;
+  for (const node of activePage.value.components) {
+    triggerLoadRecursive(node);
+  }
+}
 
 /** 当前页 */
 const activePage = computed<AppPage | null>(
@@ -62,19 +81,29 @@ function switchPage(pageId: string): void {
 /** 当前页运行时状态（只读） */
 const activeState = computed(() => pageStates.value[activePageId.value]);
 
-/** 当前页解析后的节点（props 中的 {{变量}} 已替换为运行时值） */
-const resolvedNodes = computed<ComponentNode[]>(() => {
-  if (!activePage.value || !activeState.value) return [];
+/** 递归解析节点：替换 {{变量}}，过滤隐藏节点（含子节点） */
+function resolveNode(node: ComponentNode): ComponentNode | null {
+  if (!activeState.value || activeState.value.hiddenIds.has(node.id)) return null;
   const values = activeState.value.varValues;
+  const resolvedProps: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(node.props)) {
+    resolvedProps[k] = resolveValue(v, values);
+  }
+  return {
+    ...node,
+    props: resolvedProps,
+    children: node.children
+      .map(resolveNode)
+      .filter((n): n is ComponentNode => n !== null),
+  };
+}
+
+/** 当前页解析后的节点（props 中的 {{变量}} 已替换为运行时值，含子节点递归） */
+const resolvedNodes = computed<ComponentNode[]>(() => {
+  if (!activePage.value) return [];
   return activePage.value.components
-    .filter((n) => !activeState.value.hiddenIds.has(n.id))
-    .map((node) => {
-      const resolvedProps: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(node.props)) {
-        resolvedProps[k] = resolveValue(v, values);
-      }
-      return { ...node, props: resolvedProps };
-    });
+    .map(resolveNode)
+    .filter((n): n is ComponentNode => n !== null);
 });
 
 /** 解析事件配置文本：先替换 {{$self}}（触发组件值），再替换 {{变量名}} */
@@ -142,6 +171,20 @@ function runAction(
         switchPage(config.pageId);
       }
       break;
+    case 'openModal':
+    case 'closeModal': {
+      const modalId = config.modalId ?? '';
+      ElMessage.info(
+        `${action === 'openModal' ? '打开弹窗' : '关闭弹窗'}（占位）：${modalId || '未指定弹窗 id'}`,
+      );
+      break;
+    }
+    case 'callWorkflow': {
+      const wfId = config.workflowId ?? '';
+      const params = resolveEventText(config.workflowParams ?? '', selfValue);
+      ElMessage.info(`调用工作流（占位）：${wfId || '未指定 id'}，入参：${params || '无'}`);
+      break;
+    }
     case 'none':
     default:
       break;
@@ -163,20 +206,9 @@ function coerceValue(
   return raw;
 }
 
-function onInput(e: Event, nodeId: string): void {
-  const target = e.target as HTMLInputElement;
-  if (!activeState.value) return;
-  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-    activeState.value.inputValues[nodeId] = target.value;
-  }
-}
-
-function onNodeClick(node: ComponentNode): void {
-  handleEvent(node, 'click');
-}
-
-function onChange(node: ComponentNode): void {
-  handleEvent(node, 'change');
+/** 输入值回调（NodeWrapper 透传） */
+function handleInput(node: ComponentNode, value: string): void {
+  if (activeState.value) activeState.value.inputValues[node.id] = value;
 }
 
 function onBack(): void {
@@ -211,17 +243,14 @@ function onBack(): void {
       <div v-if="!app" class="loading">加载中...</div>
       <div v-else-if="resolvedNodes.length === 0" class="empty">该页面暂无内容</div>
       <div v-else class="preview-content">
-        <div
+        <NodeWrapper
           v-for="node in resolvedNodes"
           :key="node.id"
-          class="preview-node"
-          :style="{ width: node.size.width + 'px' }"
-          @click="onNodeClick(node)"
-          @input="onInput($event, node.id)"
-          @change="onChange(node)"
-        >
-          <ComponentRenderer :node="node" />
-        </div>
+          :node="node"
+          readonly
+          :event-handler="handleEvent"
+          :input-handler="handleInput"
+        />
       </div>
     </main>
   </div>
@@ -325,9 +354,5 @@ function onBack(): void {
   background: var(--color-bg-1);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-}
-
-.preview-node {
-  width: 100%;
 }
 </style>

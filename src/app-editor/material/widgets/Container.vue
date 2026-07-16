@@ -1,14 +1,24 @@
 <script setup lang="ts">
-defineProps<{ padding?: number; gap?: number; background?: string }>();
+const props = defineProps<{
+  direction?: 'vertical' | 'horizontal';
+  justify?: string;
+  align?: string;
+  gap?: number;
+  padding?: number;
+  background?: string;
+}>();
 </script>
 
 <template>
   <div
     class="mat-container"
     :style="{
-      padding: (padding ?? 16) + 'px',
-      gap: (gap ?? 12) + 'px',
-      background: background ?? '#fff',
+      flexDirection: props.direction === 'horizontal' ? 'row' : 'column',
+      justifyContent: props.justify ?? 'flex-start',
+      alignItems: props.align ?? 'flex-start',
+      gap: (props.gap ?? 12) + 'px',
+      padding: (props.padding ?? 16) + 'px',
+      background: props.background ?? '#fff',
     }"
   >
     <slot />
@@ -19,9 +29,9 @@ defineProps<{ padding?: number; gap?: number; background?: string }>();
 <style scoped>
 .mat-container {
   display: flex;
-  flex-direction: column;
   width: 100%;
   height: 100%;
+  min-height: 80px;
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-md);
 }

@@ -1,37 +1,31 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-
 const props = defineProps<{
   content?: string;
-  level?: number;
+  fontSize?: number;
+  fontWeight?: string;
+  color?: string;
   align?: 'left' | 'center' | 'right';
 }>();
-
-const tag = computed(() => {
-  const lv = props.level ?? 3;
-  if (lv >= 4) return 'p';
-  return `h${lv}`;
-});
-
-const size = computed(() => {
-  const lv = props.level ?? 3;
-  if (lv === 1) return '24px';
-  if (lv === 2) return '20px';
-  if (lv === 3) return '16px';
-  return '14px';
-});
 </script>
 
 <template>
-  <component
-    :is="tag"
+  <div
+    class="mat-text"
     :style="{
-      textAlign: align ?? 'left',
-      margin: 0,
-      fontSize: size,
-      fontWeight: (level ?? 3) <= 3 ? 600 : 400,
+      fontSize: (props.fontSize ?? 14) + 'px',
+      fontWeight: props.fontWeight ?? '400',
+      color: props.color ?? '#1f2329',
+      textAlign: props.align ?? 'left',
     }"
   >
-    {{ content ?? '文本内容' }}
-  </component>
+    {{ props.content ?? '这是一段文本' }}
+  </div>
 </template>
+
+<style scoped>
+.mat-text {
+  width: 100%;
+  line-height: 1.6;
+  word-break: break-word;
+}
+</style>

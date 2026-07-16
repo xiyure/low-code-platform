@@ -1,12 +1,102 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, markRaw, type Component } from 'vue';
 import { useEditorStore } from '@/store/editorStore';
 import { materialRegistry } from '@/app-editor/material/registry';
-import { Plus } from '@element-plus/icons-vue';
+import { Plus, Delete as DeleteIcon } from '@element-plus/icons-vue';
+import * as Icons from '@element-plus/icons-vue';
 import type { ComponentEvent, PropertyField } from '@/types';
 import EventBlock from './EventBlock.vue';
 
 const editor = useEditorStore();
+
+/** iconPicker 常用图标候选（点击直接套用） */
+const iconCandidates: string[] = [
+  'Search',
+  'Plus',
+  'Delete',
+  'Edit',
+  'EditPen',
+  'Setting',
+  'Tools',
+  'Operation',
+  'Star',
+  'StarFilled',
+  'User',
+  'Lock',
+  'View',
+  'Refresh',
+  'Download',
+  'Upload',
+  'Picture',
+  'Document',
+  'Calendar',
+  'Clock',
+  'Message',
+  'Phone',
+  'Location',
+  'Bell',
+  'Filter',
+  'Sort',
+  'ArrowDown',
+  'ArrowUp',
+  'ArrowLeft',
+  'ArrowRight',
+  'Check',
+  'Close',
+  'Warning',
+  'InfoFilled',
+  'CircleCheck',
+  'SuccessFilled',
+  'WarningFilled',
+  'CircleClose',
+  'ErrorFilled',
+  'More',
+  'MoreFilled',
+  'Menu',
+  'Grid',
+  'Tickets',
+  'Pointer',
+  'Histogram',
+  'Link',
+  'Switch',
+  'Minus',
+  'ChatDotRound',
+];
+
+/** 解析图标名 → 组件（找不到返回 undefined） */
+function resolveIcon(name: string): Component | undefined {
+  if (!name) return undefined;
+  return markRaw((Icons as Record<string, Component>)[name]);
+}
+
+/** optionsEditor 数据操作 */
+interface OptionItem {
+  label: string;
+  value: string;
+}
+
+function getOptions(key: string): OptionItem[] {
+  const v = getProp(key);
+  return Array.isArray(v) ? (v as OptionItem[]) : [];
+}
+function addOption(key: string): void {
+  const list = [...getOptions(key)];
+  const idx = list.length + 1;
+  list.push({ label: `选项${idx}`, value: String(idx) });
+  setProp(key, list);
+}
+function removeOption(key: string, idx: number): void {
+  setProp(
+    key,
+    getOptions(key).filter((_, i) => i !== idx),
+  );
+}
+function updateOption(key: string, idx: number, patch: Partial<OptionItem>): void {
+  setProp(
+    key,
+    getOptions(key).map((o, i) => (i === idx ? { ...o, ...patch } : o)),
+  );
+}
 
 const node = computed(() => editor.selectedNode);
 const meta = computed(() => (node.value ? materialRegistry[node.value.componentId] : null));
@@ -24,6 +114,13 @@ function getProp(key: string): string | number | boolean | undefined {
   const v = node.value?.props[key];
   return v as string | number | boolean | undefined;
 }
+/** 获取属性显示值：数组/对象自动转 JSON 字符串 */
+function getPropDisplay(key: string): string {
+  const v = node.value?.props[key];
+  if (v === undefined || v === null) return '';
+  if (Array.isArray(v) || typeof v === 'object') return JSON.stringify(v, null, 2);
+  return String(v);
+}
 function setProp(key: string, value: unknown): void {
   if (node.value) editor.updateProps(node.value.id, key, value);
 }
@@ -34,21 +131,6 @@ function insertVarToProp(key: string, name: string): void {
   const cur = String(getProp(key) ?? '');
   setProp(key, cur + `{{${name}}}`);
   propVarPicker.value[key] = '';
-}
-
-// ===== 组件名称编辑 =====
-const editingName = ref(false);
-const nameInput = ref('');
-function startEditName(): void {
-  if (!node.value) return;
-  nameInput.value = node.value.name;
-  editingName.value = true;
-}
-function commitName(): void {
-  if (node.value && nameInput.value.trim()) {
-    editor.updateNode(node.value.id, { name: nameInput.value.trim() });
-  }
-  editingName.value = false;
 }
 
 // ===== 样式读写 =====
@@ -89,11 +171,15 @@ const alignOptions = [
 
 // ===== 事件管理 =====
 const typeLabel: Record<ComponentEvent['type'], string> = {
+  load: '加载时',
   click: '点击时',
-  change: '值变化时',
+  doubleClick: '双击时',
+  mouseEnter: '鼠标移入时',
+  mouseLeave: '鼠标移出时',
   submit: '提交时',
   focus: '聚焦时',
   blur: '失焦时',
+  change: '值变化时',
 };
 
 function addEvent(type: ComponentEvent['type']): void {
@@ -127,26 +213,6 @@ const expandedEvent = ref<number | number[]>(0);
       <p>选中画布上的组件后在此配置</p>
     </div>
     <template v-else>
-      <!-- 组件信息头 -->
-      <div class="comp-info">
-        <div class="comp-info-row">
-          <span class="comp-type">{{ meta?.name ?? node.componentId }}</span>
-          <span class="comp-id" :title="node.id">{{ node.id.slice(0, 8) }}</span>
-        </div>
-        <div v-if="!editingName" class="comp-name" @click="startEditName">
-          <span>{{ node.name }}</span>
-          <span class="edit-hint">点击重命名</span>
-        </div>
-        <el-input
-          v-else
-          v-model="nameInput"
-          size="small"
-          placeholder="组件名称"
-          @blur="commitName"
-          @keyup.enter="commitName"
-        />
-      </div>
-
       <!-- Tab 切换 -->
       <div class="panel-tabs">
         <el-button
@@ -182,7 +248,7 @@ const expandedEvent = ref<number | number[]>(0);
               v-else-if="field.type === 'textarea'"
               type="textarea"
               :rows="3"
-              :model-value="String(getProp(field.key) ?? '')"
+              :model-value="getPropDisplay(field.key)"
               @update:model-value="(v) => setProp(field.key, v)"
             />
             <el-input-number
@@ -213,6 +279,76 @@ const expandedEvent = ref<number | number[]>(0);
               :model-value="String(getProp(field.key) ?? '#ffffff')"
               @update:model-value="(v) => setProp(field.key, v ?? '#ffffff')"
             />
+            <el-slider
+              v-else-if="field.type === 'slider'"
+              :model-value="Number(getProp(field.key) ?? field.default ?? 0)"
+              :min="field.min ?? 0"
+              :max="field.max ?? 100"
+              :step="field.step ?? 1"
+              @update:model-value="
+                (v: number | number[]) => setProp(field.key, Array.isArray(v) ? v[0] : v)
+              "
+            />
+            <!-- 图标选择器：文本输入 + 实时预览 + 常用图标快捷选择 -->
+            <div v-else-if="field.type === 'iconPicker'" class="icon-picker">
+              <div class="icon-picker-row">
+                <el-input
+                  :model-value="String(getProp(field.key) ?? '')"
+                  placeholder="图标名（PascalCase）"
+                  @update:model-value="(v) => setProp(field.key, v)"
+                />
+                <div class="icon-preview">
+                  <el-icon v-if="resolveIcon(String(getProp(field.key) ?? ''))">
+                    <component :is="resolveIcon(String(getProp(field.key) ?? ''))" />
+                  </el-icon>
+                  <span v-else class="icon-preview-empty">无</span>
+                </div>
+              </div>
+              <div class="icon-candidates">
+                <el-tooltip
+                  v-for="name in iconCandidates"
+                  :key="name"
+                  :content="name"
+                  placement="top"
+                >
+                  <el-button
+                    circle
+                    size="small"
+                    class="icon-candidate"
+                    :class="{ active: String(getProp(field.key)) === name }"
+                    @click="setProp(field.key, name)"
+                  >
+                    <el-icon><component :is="resolveIcon(name)" /></el-icon>
+                  </el-button>
+                </el-tooltip>
+              </div>
+            </div>
+            <!-- 选项编辑器：增删改 label/value -->
+            <div v-else-if="field.type === 'optionsEditor'" class="options-editor">
+              <div v-for="(opt, idx) in getOptions(field.key)" :key="idx" class="option-row">
+                <el-input
+                  :model-value="opt.label"
+                  size="small"
+                  placeholder="显示名"
+                  @update:model-value="(v) => updateOption(field.key, idx, { label: v })"
+                />
+                <el-input
+                  :model-value="opt.value"
+                  size="small"
+                  placeholder="值"
+                  @update:model-value="(v) => updateOption(field.key, idx, { value: v })"
+                />
+                <el-button
+                  size="small"
+                  circle
+                  :icon="DeleteIcon"
+                  @click="removeOption(field.key, idx)"
+                />
+              </div>
+              <el-button size="small" :icon="Plus" plain @click="addOption(field.key)">
+                添加选项
+              </el-button>
+            </div>
             <el-select
               v-if="
                 (field.type === 'input' || field.type === 'textarea') && editor.variables.length > 0
@@ -373,15 +509,19 @@ const expandedEvent = ref<number | number[]>(0);
             <el-collapse-item title="效果" name="effect">
               <div class="form-item">
                 <label class="form-label">
-                  透明度 ({{
-                    Math.round((Number(getStyle('opacity') || '1') || 1) * 100)
-                  }}%)
+                  透明度 ({{ Math.round((Number(getStyle('opacity') || '1') || 1) * 100) }}%)
                 </label>
                 <el-slider
                   :model-value="(Number(getStyle('opacity') || '1') || 1) * 100"
                   :min="0"
                   :max="100"
-                  @update:model-value="(v: number | number[]) => setStyle('opacity', String((Number(Array.isArray(v) ? v[0] : v) || 100) / 100))"
+                  @update:model-value="
+                    (v: number | number[]) =>
+                      setStyle(
+                        'opacity',
+                        String((Number(Array.isArray(v) ? v[0] : v) || 100) / 100),
+                      )
+                  "
                 />
               </div>
             </el-collapse-item>
@@ -407,11 +547,7 @@ const expandedEvent = ref<number | number[]>(0);
           </div>
 
           <el-collapse v-model="expandedEvent" class="event-collapse">
-            <el-collapse-item
-              v-for="(ev, idx) in events"
-              :key="idx"
-              :name="idx"
-            >
+            <el-collapse-item v-for="(ev, idx) in events" :key="idx" :name="idx">
               <template #title>
                 <div class="event-header">
                   <span class="event-type-tag">{{ typeLabel[ev.type] }}</span>
@@ -643,5 +779,74 @@ const expandedEvent = ref<number | number[]>(0);
 .muted {
   font-size: 12px;
   color: var(--color-text-4);
+}
+
+/* 图标选择器 */
+.icon-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.icon-picker-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.icon-preview {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  color: var(--color-text-1);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.icon-preview-empty {
+  font-size: 11px;
+  color: var(--color-text-4);
+}
+
+.icon-candidates {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  max-height: 180px;
+  padding: 6px;
+  overflow-y: auto;
+  background: var(--color-bg-2);
+  border-radius: var(--radius-md);
+}
+
+.icon-candidate {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 14px;
+  color: var(--color-text-2);
+}
+
+.icon-candidate.active {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+/* 选项编辑器 */
+.options-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.option-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
 }
 </style>

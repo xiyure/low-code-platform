@@ -26,8 +26,33 @@ export const useEditorStore = defineStore('editor', () => {
     () => pages.value.findIndex((p) => p.id === activePageId.value),
   );
 
+  // ===== 递归查找（支持容器嵌套） =====
+  /** 按 id 递归查找节点（默认从当前页顶层 nodes 查起） */
+  function findNodeById(id: string, list: ComponentNode[] = nodes.value): ComponentNode | null {
+    for (const n of list) {
+      if (n.id === id) return n;
+      const found = findNodeById(id, n.children);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  /** 查找节点所在的位置：所属数组 + 索引 + 父节点（顶层时 parent=null） */
+  function findNodeLocation(
+    id: string,
+    list: ComponentNode[] = nodes.value,
+    parent: ComponentNode | null = null,
+  ): { list: ComponentNode[]; index: number; parent: ComponentNode | null } | null {
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].id === id) return { list, index: i, parent };
+      const childLoc = findNodeLocation(id, list[i].children, list[i]);
+      if (childLoc) return childLoc;
+    }
+    return null;
+  }
+
   const selectedNode = computed<ComponentNode | null>(
-    () => nodes.value.find((n) => n.id === selectedId.value) ?? null,
+    () => (selectedId.value ? findNodeById(selectedId.value) : null),
   );
 
   /** 将当前编辑态（nodes/variables）写回 active page */
@@ -120,8 +145,8 @@ export const useEditorStore = defineStore('editor', () => {
     future.value = [];
   }
 
-  /** 新增组件到列表末尾（或指定索引） */
-  function addNode(materialId: string, index?: number): ComponentNode | null {
+  /** 新增组件：parentId 存在时挂到该容器的 children，否则加到当前页顶层 */
+  function addNode(materialId: string, index?: number, parentId?: string): ComponentNode | null {
     const meta = materialRegistry[materialId];
     if (!meta) return null;
     commit();
@@ -135,8 +160,16 @@ export const useEditorStore = defineStore('editor', () => {
       children: [],
       events: [],
     };
-    if (typeof index === 'number') nodes.value.splice(index, 0, node);
-    else nodes.value.push(node);
+    if (parentId) {
+      const parent = findNodeById(parentId);
+      if (parent) {
+        if (typeof index === 'number') parent.children.splice(index, 0, node);
+        else parent.children.push(node);
+      }
+    } else {
+      if (typeof index === 'number') nodes.value.splice(index, 0, node);
+      else nodes.value.push(node);
+    }
     selectedId.value = node.id;
     return node;
   }
@@ -146,39 +179,40 @@ export const useEditorStore = defineStore('editor', () => {
   }
 
   function removeNode(id: string): void {
+    const loc = findNodeLocation(id);
+    if (!loc) return;
     commit();
-    nodes.value = nodes.value.filter((n) => n.id !== id);
+    loc.list.splice(loc.index, 1);
     if (selectedId.value === id) selectedId.value = null;
   }
 
-  /** 复制节点到其后方 */
+  /** 复制节点到其后方（同一层级） */
   function duplicateNode(id: string): void {
-    const node = nodes.value.find((n) => n.id === id);
-    if (!node) return;
+    const loc = findNodeLocation(id);
+    if (!loc) return;
     commit();
-    const copy: ComponentNode = cloneDeep(node);
+    const copy: ComponentNode = cloneDeep(loc.list[loc.index]);
     copy.id = genId();
-    const idx = nodes.value.findIndex((n) => n.id === id);
-    nodes.value.splice(idx + 1, 0, copy);
+    loc.list.splice(loc.index + 1, 0, copy);
     selectedId.value = copy.id;
   }
 
-  /** 上移一位 */
+  /** 上移一位（在同一层级内） */
   function moveUp(id: string): void {
-    const idx = nodes.value.findIndex((n) => n.id === id);
-    if (idx <= 0) return;
+    const loc = findNodeLocation(id);
+    if (!loc || loc.index <= 0) return;
     commit();
-    const arr = nodes.value;
-    [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+    const arr = loc.list;
+    [arr[loc.index - 1], arr[loc.index]] = [arr[loc.index], arr[loc.index - 1]];
   }
 
-  /** 下移一位 */
+  /** 下移一位（在同一层级内） */
   function moveDown(id: string): void {
-    const idx = nodes.value.findIndex((n) => n.id === id);
-    if (idx < 0 || idx >= nodes.value.length - 1) return;
+    const loc = findNodeLocation(id);
+    if (!loc || loc.index >= loc.list.length - 1) return;
     commit();
-    const arr = nodes.value;
-    [arr[idx + 1], arr[idx]] = [arr[idx], arr[idx + 1]];
+    const arr = loc.list;
+    [arr[loc.index + 1], arr[loc.index]] = [arr[loc.index], arr[loc.index + 1]];
   }
 
   /** 拖拽排序后整体提交（vuedraggable 已直接修改数组，这里仅入栈历史） */
@@ -187,23 +221,23 @@ export const useEditorStore = defineStore('editor', () => {
   }
 
   function updateNode(id: string, patch: Partial<ComponentNode>): void {
-    const node = nodes.value.find((n) => n.id === id);
+    const node = findNodeById(id);
     if (node) Object.assign(node, patch);
   }
 
   function updateProps(id: string, key: string, value: unknown): void {
-    const node = nodes.value.find((n) => n.id === id);
+    const node = findNodeById(id);
     if (node) node.props[key] = value;
   }
 
   function updateStyle(id: string, key: string, value: string): void {
-    const node = nodes.value.find((n) => n.id === id);
+    const node = findNodeById(id);
     if (node) node.style[key] = value;
   }
 
   /** 实时更新尺寸（拖拽过程中调用，不入历史） */
   function updateSize(id: string, size: { width: number; height: number }): void {
-    const node = nodes.value.find((n) => n.id === id);
+    const node = findNodeById(id);
     if (node) node.size = size;
   }
 
@@ -223,7 +257,7 @@ export const useEditorStore = defineStore('editor', () => {
 
   function updateEvents(id: string, events: ComponentNode['events']): void {
     commit();
-    const node = nodes.value.find((n) => n.id === id);
+    const node = findNodeById(id);
     if (node) node.events = events ? cloneDeep(events) : [];
   }
 
