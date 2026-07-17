@@ -20,4 +20,17 @@ export default defineConfig({
     port: 5174,
     open: true,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vue: ['vue', 'vue-router', 'pinia'],
+          'element-plus': ['element-plus', '@element-plus/icons-vue'],
+          draggable: ['vue-draggable-plus', 'sortablejs'],
+          utils: ['lodash-es', 'nanoid'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 800,
+  },
 });

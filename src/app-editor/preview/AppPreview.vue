@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, nextTick } from 'vue';
+import { onMounted, ref, reactive, computed, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { spaceApi } from '@/space/infrastructure/spaceApi';
 import NodeWrapper from '@/app-editor/main/NodeWrapper.vue';
@@ -13,17 +13,17 @@ const router = useRouter();
 const app = ref<AppListItem | null>(null);
 /** 当前预览的页面 id（默认首页） */
 const activePageId = ref<string>('');
-/** 每页的运行时状态（页面切换时各自独立保留） */
-const pageStates = ref<
-  Record<
-    string,
-    {
-      varValues: Record<string, string | number | boolean>;
-      inputValues: Record<string, string>;
-      hiddenIds: Set<string>;
-    }
-  >
->({});
+/**
+ * 每页的运行时状态（页面切换时各自独立保留）
+ * 用 reactive 让 varValues/inputValues 的属性赋值能被 computed 捕获，
+ * 实现 setVariable 后依赖该变量的组件自动重渲染。
+ */
+interface PageState {
+  varValues: Record<string, string | number | boolean>;
+  inputValues: Record<string, string>;
+  hiddenIds: Set<string>;
+}
+const pageStates = reactive<Record<string, PageState>>({});
 
 onMounted(async () => {
   const data = await spaceApi.getApp(route.params.appId as string);
@@ -70,11 +70,11 @@ const activePage = computed<AppPage | null>(
 
 /** 确保某页的运行时状态已初始化（切换页时调用） */
 function ensurePageState(pageId: string): void {
-  if (pageStates.value[pageId] || !activePage.value) return;
+  if (pageStates[pageId] || !activePage.value) return;
   // 全局变量作为基底，页面变量覆盖同名全局变量
   const globalValues = buildInitialValues(app.value?.globalVariables ?? []);
   const pageValues = buildInitialValues(activePage.value.variables ?? []);
-  pageStates.value[pageId] = {
+  pageStates[pageId] = {
     varValues: { ...globalValues, ...pageValues },
     inputValues: {},
     hiddenIds: new Set(),
@@ -88,8 +88,8 @@ function switchPage(pageId: string): void {
   ensurePageState(pageId);
 }
 
-/** 当前页运行时状态（只读） */
-const activeState = computed(() => pageStates.value[activePageId.value]);
+/** 当前页运行时状态（reactive，属性变更会触发依赖它的 computed 重算） */
+const activeState = computed(() => pageStates[activePageId.value]);
 
 /** 递归解析节点：替换 {{变量}}，过滤隐藏节点（含子节点和命名 slot 子节点） */
 function resolveNode(node: ComponentNode): ComponentNode | null {
@@ -226,9 +226,18 @@ function coerceValue(
   return raw;
 }
 
-/** 输入值回调（NodeWrapper 透传） */
+/**
+ * 输入值回调（NodeWrapper 透传）
+ * 写入响应式 inputValues 后同步触发 change 事件链，
+ * 让该输入组件配置的 setVariable 等动作即时执行，
+ * 从而实现「输入框值变化 → 联动其他组件」的响应式数据流。
+ */
 function handleInput(node: ComponentNode, value: string): void {
-  if (activeState.value) activeState.value.inputValues[node.id] = value;
+  if (!activeState.value) return;
+  activeState.value.inputValues[node.id] = value;
+  // 触发 change 事件链：动作中的 setVariable 会更新 varValues（响应式），
+  // 依赖该变量的组件的 resolveNode computed 会自动重算并重渲染。
+  handleEvent(node, 'change');
 }
 
 function onBack(): void {

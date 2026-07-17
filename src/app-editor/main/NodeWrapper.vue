@@ -170,6 +170,7 @@ function onResizeEnd(): void {
     class="node-wrapper"
     :class="{ selected, 'is-container': isContainer, readonly }"
     :style="{ width: node.size.width + 'px' }"
+    :data-node-id="node.id"
     @click="onClick"
     @dblclick="onDblClick"
     @mouseenter="onMouseEnter"

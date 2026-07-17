@@ -1,8 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import WorkspaceLayout from '@/space/presentation/WorkspaceLayout.vue';
-import SpaceHome from '@/space/presentation/SpaceHome.vue';
-import AppEditor from '@/app-editor/main/AppEditor.vue';
-import AppPreview from '@/app-editor/preview/AppPreview.vue';
+
+// 路由级懒加载：每个页面拆为独立 chunk，减小首屏体积
+const WorkspaceLayout = () => import('@/space/presentation/WorkspaceLayout.vue');
+const SpaceHome = () => import('@/space/presentation/SpaceHome.vue');
+const AppEditor = () => import('@/app-editor/main/AppEditor.vue');
+const AppPreview = () => import('@/app-editor/preview/AppPreview.vue');
 
 const router = createRouter({
   history: createWebHistory(),

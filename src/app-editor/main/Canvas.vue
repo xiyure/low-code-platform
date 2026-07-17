@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, shallowRef } from 'vue';
 import { VueDraggable } from 'vue-draggable-plus';
 import { useEditorStore } from '@/store/editorStore';
 import NodeWrapper from './NodeWrapper.vue';
+import AlignGuides from './AlignGuides.vue';
 import { Plus } from '@element-plus/icons-vue';
 
 const editor = useEditorStore();
 const canvasRef = ref<HTMLElement>();
+const alignGuidesRef = shallowRef<InstanceType<typeof AlignGuides> | null>(null);
 
 /** 退格键删除选中组件（输入框聚焦时不触发） */
 function onKeydown(e: KeyboardEvent): void {
@@ -32,11 +34,22 @@ const dragOptions = {
   dragClass: 'drag-dragging',
   swapThreshold: 0.65,
   emptyInsertThreshold: 80,
+  onStart: () => alignGuidesRef.value?.start(),
+  onEnd: () => {
+    alignGuidesRef.value?.stop();
+    editor.commitSort();
+  },
 };
 
-/** VueDraggable 拖拽结束：提交一次历史用于撤销 */
+/** VueDraggable 拖拽结束：提交一次历史用于撤销（保留兼容） */
 function onDragEnd(): void {
   editor.commitSort();
+}
+
+/** 提供给 AlignGuides 的画布容器获取函数 */
+function getCanvasStage(): HTMLElement | undefined {
+  // canvas-page 才是节点容器（相对它定位辅助线）
+  return canvasRef.value?.querySelector<HTMLElement>('.canvas-page') ?? canvasRef.value;
 }
 
 /** 从左侧物料库拖入画布顶层（原生 HTML5 拖拽，与 VueDraggable 互不影响） */
@@ -69,6 +82,8 @@ function clearSelect(): void {
       @click="clearSelect"
     >
       <div class="canvas-page">
+        <AlignGuides ref="alignGuidesRef" :container-ref="getCanvasStage" />
+
         <div v-if="editor.nodes.length === 0" class="canvas-empty" @drop="onDrop" @dragover="onDragOver">
           <el-icon class="empty-icon"><Plus /></el-icon>
           <p>将左侧组件拖入画布开始搭建</p>
@@ -106,6 +121,7 @@ function clearSelect(): void {
     padding: 32px 24px;
 
     .canvas-page {
+      position: relative;
       width: 100%;
       max-width: 720px;
       min-height: 600px;

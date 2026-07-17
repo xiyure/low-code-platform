@@ -4,6 +4,7 @@ import { useDraggable } from 'vue-draggable-plus';
 import type { ComponentNode, ComponentEvent } from '@/types';
 import { useEditorStore } from '@/store/editorStore';
 import NodeWrapper from './NodeWrapper.vue';
+import { Plus } from '@element-plus/icons-vue';
 
 /**
  * SlotContainer：封装单个 slot 的 container-list + SortableJS 拖拽逻辑。
@@ -35,6 +36,8 @@ const props = defineProps<{
 const editor = useEditorStore();
 const containerEl = ref<HTMLElement>();
 const dragOver = ref(false);
+// dragenter/dragleave 在子元素间切换时也会触发，用计数器避免高亮闪烁
+let dragCounter = 0;
 
 // 编辑模式：初始化 SortableJS
 // toRef(props, 'children') 返回指向 props.children 的可写 ref，
@@ -60,6 +63,7 @@ function onDrop(e: DragEvent): void {
   if (!materialId) return; // 非物料库拖入，交给 SortableJS
   e.preventDefault();
   e.stopPropagation();
+  dragCounter = 0;
   dragOver.value = false;
   editor.addNode(materialId, undefined, props.parentId, props.slotName || undefined);
 }
@@ -69,11 +73,21 @@ function onDragOver(e: DragEvent): void {
   e.preventDefault();
   e.stopPropagation();
   e.dataTransfer.dropEffect = 'copy';
+}
+
+function onDragEnter(e: DragEvent): void {
+  if (!e.dataTransfer?.types.includes('application/x-material-id')) return;
+  e.preventDefault();
+  dragCounter++;
   dragOver.value = true;
 }
 
-function onDragLeave(): void {
-  dragOver.value = false;
+function onDragLeave(e: DragEvent): void {
+  // 仅当离开容器（relatedTarget 不在容器内）时才计数减少
+  const related = e.relatedTarget as Node | null;
+  if (related && containerEl.value?.contains(related)) return;
+  dragCounter = Math.max(0, dragCounter - 1);
+  if (dragCounter === 0) dragOver.value = false;
 }
 </script>
 
@@ -84,6 +98,7 @@ function onDragLeave(): void {
     :class="{ empty: children.length === 0, 'drop-active': dragOver }"
     @drop="onDrop"
     @dragover="onDragOver"
+    @dragenter="onDragEnter"
     @dragleave="onDragLeave"
   >
     <NodeWrapper
@@ -96,6 +111,11 @@ function onDragLeave(): void {
     />
     <div v-if="children.length === 0 && !readonly" class="drop-hint">
       {{ placeholder ?? '拖入组件' }}
+    </div>
+    <!-- 拖拽悬停时的实时提示（覆盖在容器上方） -->
+    <div v-if="dragOver && !readonly" class="drop-overlay">
+      <el-icon class="overlay-icon"><Plus /></el-icon>
+      <span>松开以放入到此容器</span>
     </div>
   </div>
 </template>
@@ -115,11 +135,14 @@ function onDragLeave(): void {
   border-radius: var(--radius-sm);
   transition:
     background 0.15s,
-    border-color 0.15s;
+    border-color 0.15s,
+    box-shadow 0.15s;
 
   &.drop-active {
     background: var(--color-primary-light);
     border-color: var(--color-primary);
+    border-style: solid;
+    box-shadow: 0 0 0 2px var(--color-primary-light);
   }
 
   .drop-hint {
@@ -130,6 +153,27 @@ function onDragLeave(): void {
     font-size: 12px;
     color: var(--color-text-4);
     pointer-events: none;
+  }
+
+  /* 拖拽悬停时的实时提示覆盖层 */
+  .drop-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--color-primary);
+    background: rgb(64 158 255 / 8%);
+    border-radius: var(--radius-sm);
+    pointer-events: none;
+
+    .overlay-icon {
+      font-size: 22px;
+    }
   }
 }
 </style>
