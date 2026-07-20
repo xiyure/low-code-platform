@@ -5,7 +5,6 @@ const props = defineProps<{
   content?: string;
   level?: number;
   align?: 'left' | 'center' | 'right';
-  color?: string;
 }>();
 
 const tag = computed(() => `h${props.level ?? 1}`);
@@ -29,11 +28,11 @@ const fontWeight = computed(() => {
 </script>
 
 <template>
+  <!-- 颜色通过外层 .comp-wrapper 的 color 继承，避免属性 Tab 与样式 Tab 冲突 -->
   <component
     :is="tag"
     :style="{
       textAlign: align ?? 'left',
-      color: color,
       margin: 0,
       fontSize: fontSize,
       fontWeight: fontWeight,

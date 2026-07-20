@@ -18,7 +18,7 @@ const props = defineProps<{
       alignItems: props.align ?? 'flex-start',
       gap: (props.gap ?? 12) + 'px',
       padding: (props.padding ?? 16) + 'px',
-      background: props.background ?? '#fff',
+      background: props.background || undefined,
     }"
   >
     <slot />

@@ -7,6 +7,9 @@ const props = defineProps<{
   max?: number;
   allowHalf?: boolean;
   defaultValue?: number;
+  activeColor?: string;
+  voidColor?: string;
+  labelColor?: string;
 }>();
 
 const value = ref(props.defaultValue ?? 0);
@@ -21,12 +24,20 @@ defineExpose({
 
 <template>
   <div class="mat-rate">
-    <label v-if="label" class="field-label">{{ label }}</label>
+    <label
+      v-if="label"
+      class="field-label"
+      :style="{ color: labelColor || undefined }"
+    >
+      {{ label }}
+    </label>
     <el-rate
       v-model="value"
       :max="max ?? 5"
       :allow-half="allowHalf"
       :disabled="disabled"
+      :active-color="activeColor || undefined"
+      :void-color="voidColor || undefined"
     />
   </div>
 </template>

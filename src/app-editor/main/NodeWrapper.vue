@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import type { ComponentNode, ComponentEvent } from '@/types';
 import { useEditorStore } from '@/store/editorStore';
 import { materialRegistry } from '@/app-editor/material/registry';
@@ -67,7 +67,20 @@ function onClick(e: MouseEvent): void {
   if (props.readonly) {
     props.eventHandler?.(props.node, 'click');
   } else {
+    // 编辑模式：阻止链接跳转、弹窗打开等原生行为，仅选中组件
+    e.preventDefault();
     editor.selectNode(props.node.id);
+  }
+}
+
+/** 编辑模式下阻止表单元素的 mousedown 默认行为（避免 input/textarea 聚焦、按钮触发），但不阻止普通 div 的 mousedown（让 SortableJS 能发起拖拽） */
+function onMouseDown(e: MouseEvent): void {
+  if (props.readonly) return;
+  const target = e.target as HTMLElement;
+  const tag = target.tagName;
+  // 仅阻止表单元素的默认行为；div/span 等容器元素放行，确保 SortableJS 拖拽正常
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'SELECT' || target.isContentEditable) {
+    e.preventDefault();
   }
 }
 
@@ -126,7 +139,58 @@ function onContainerDrop(e: DragEvent): void {
   editor.addNode(materialId, undefined, props.node.id);
 }
 
-// ===== 尺寸拉伸（编辑模式，右下角） =====
+// ===== 右键菜单 =====
+const contextMenuVisible = ref(false);
+const contextMenuX = ref(0);
+const contextMenuY = ref(0);
+
+/** 右键打开操作菜单（编辑模式） */
+function onContextMenu(e: MouseEvent): void {
+  if (props.readonly) return;
+  e.preventDefault();
+  e.stopPropagation();
+  editor.selectNode(props.node.id);
+  contextMenuX.value = e.clientX;
+  contextMenuY.value = e.clientY;
+  contextMenuVisible.value = true;
+}
+
+/** 关闭右键菜单 */
+function closeContextMenu(): void {
+  contextMenuVisible.value = false;
+}
+
+/** 执行菜单操作 */
+function runAction(action: 'up' | 'down' | 'copy' | 'delete'): void {
+  closeContextMenu();
+  switch (action) {
+    case 'up':
+      editor.moveUp(props.node.id);
+      break;
+    case 'down':
+      editor.moveDown(props.node.id);
+      break;
+    case 'copy':
+      editor.duplicateNode(props.node.id);
+      break;
+    case 'delete':
+      editor.removeNode(props.node.id);
+      break;
+  }
+}
+
+// 全局点击/右键时关闭菜单
+function onGlobalClick(): void {
+  if (contextMenuVisible.value) closeContextMenu();
+}
+onMounted(() => {
+  window.addEventListener('click', onGlobalClick);
+  window.addEventListener('contextmenu', onGlobalClick, true);
+});
+onUnmounted(() => {
+  window.removeEventListener('click', onGlobalClick);
+  window.removeEventListener('contextmenu', onGlobalClick, true);
+});
 const MIN_W = 80;
 const MIN_H = 32;
 let startX = 0;
@@ -172,6 +236,8 @@ function onResizeEnd(): void {
     :style="{ width: node.size.width + 'px' }"
     :data-node-id="node.id"
     @click="onClick"
+    @mousedown="onMouseDown"
+    @contextmenu="onContextMenu"
     @dblclick="onDblClick"
     @mouseenter="onMouseEnter"
     @mouseleave="onMouseLeave"
@@ -207,31 +273,37 @@ function onResizeEnd(): void {
       </template>
     </ComponentRenderer>
 
-    <!-- 编辑态：选中时显示工具栏 -->
-    <div v-if="!readonly && selected" class="node-topbar" @click.stop @mousedown.stop>
-      <span class="topbar-name">{{ node.name }}</span>
-      <div class="topbar-actions">
-        <el-button class="tool-btn" text size="small" title="上移" @click="editor.moveUp(node.id)">
-          <el-icon><Top /></el-icon>
-        </el-button>
-        <el-button class="tool-btn" text size="small" title="下移" @click="editor.moveDown(node.id)">
-          <el-icon><Bottom /></el-icon>
-        </el-button>
-        <el-button class="tool-btn" text size="small" title="复制" @click="editor.duplicateNode(node.id)">
-          <el-icon><CopyDocument /></el-icon>
-        </el-button>
-        <el-button class="tool-btn danger" text size="small" title="删除" @click="editor.removeNode(node.id)">
-          <el-icon><Delete /></el-icon>
-        </el-button>
-      </div>
-    </div>
-
     <!-- 拉伸手柄：选中时显示，仅右下角 -->
     <span
       v-if="!readonly && selected"
       class="resize-handle rh-se"
       @pointerdown="onResizeStart($event, node.size.width, node.size.height)"
     ></span>
+
+    <!-- 右键操作菜单（编辑模式） -->
+    <teleport to="body">
+      <div
+        v-if="contextMenuVisible"
+        class="context-menu"
+        :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }"
+        @click.stop
+        @contextmenu.prevent
+      >
+        <div class="context-menu-item" @click="runAction('up')">
+          <el-icon><Top /></el-icon><span>上移</span>
+        </div>
+        <div class="context-menu-item" @click="runAction('down')">
+          <el-icon><Bottom /></el-icon><span>下移</span>
+        </div>
+        <div class="context-menu-item" @click="runAction('copy')">
+          <el-icon><CopyDocument /></el-icon><span>复制</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item danger" @click="runAction('delete')">
+          <el-icon><Delete /></el-icon><span>删除</span>
+        </div>
+      </div>
+    </teleport>
   </div>
 </template>
 
@@ -272,57 +344,6 @@ function onResizeEnd(): void {
     background: transparent;
   }
 
-  /* 顶部工具栏（选中时显示）：z-index 远高于节点本身，确保在选中节点的层叠上下文内始终最上层 */
-  .node-topbar {
-    position: absolute;
-    top: -28px;
-    left: 0;
-    z-index: 1000;
-    display: flex;
-    gap: 4px;
-    align-items: center;
-    height: 26px;
-    padding: 0 4px;
-    background: var(--color-bg-1);
-    border: 1px solid var(--color-primary);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-sm);
-
-    .topbar-name {
-      max-width: 100px;
-      font-size: 12px;
-      color: var(--color-text-2);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .topbar-actions {
-      display: flex;
-      gap: 1px;
-    }
-
-    .tool-btn {
-      width: 24px;
-      height: 22px;
-      padding: 0;
-      color: var(--color-text-2);
-      transition:
-        background 0.15s,
-        color 0.15s;
-
-      &:hover {
-        color: var(--color-primary);
-        background: var(--color-primary-light);
-      }
-
-      &.danger:hover {
-        color: var(--color-danger);
-        background: rgb(245 63 63 / 10%);
-      }
-    }
-  }
-
   /* 拉伸手柄（仅右下角）：与 topbar 同层级，确保始终可点 */
   .resize-handle {
     position: absolute;
@@ -347,5 +368,50 @@ function onResizeEnd(): void {
 
 .drag-chosen {
   border-color: var(--color-primary) !important;
+}
+</style>
+
+<style lang="scss">
+/* 右键操作菜单（Teleport 到 body，不能 scoped） */
+.context-menu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 120px;
+  padding: 4px 0;
+  background: var(--color-bg-1, #fff);
+  border: 1px solid var(--color-border, #e5e6eb);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
+
+  .context-menu-item {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: var(--color-text-1, #1f2329);
+    cursor: pointer;
+    transition: background 0.12s;
+
+    .el-icon {
+      font-size: 14px;
+    }
+
+    &:hover {
+      background: var(--color-primary-light, #ecf5ff);
+      color: var(--color-primary, #409eff);
+    }
+
+    &.danger:hover {
+      background: rgb(245 63 63 / 8%);
+      color: var(--color-danger, #f53f3f);
+    }
+  }
+
+  .context-menu-divider {
+    height: 1px;
+    margin: 4px 8px;
+    background: var(--color-border, #e5e6eb);
+  }
 }
 </style>

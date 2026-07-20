@@ -7,6 +7,9 @@ const props = defineProps<{
   activeText?: string;
   inactiveText?: string;
   defaultValue?: boolean;
+  activeColor?: string;
+  inactiveColor?: string;
+  labelColor?: string;
 }>();
 
 const value = ref(props.defaultValue ?? false);
@@ -21,12 +24,20 @@ defineExpose({
 
 <template>
   <div class="mat-switch">
-    <label v-if="label" class="field-label">{{ label }}</label>
+    <label
+      v-if="label"
+      class="field-label"
+      :style="{ color: labelColor || undefined }"
+    >
+      {{ label }}
+    </label>
     <el-switch
       v-model="value"
       :active-text="activeText"
       :inactive-text="inactiveText"
       :disabled="disabled"
+      :active-color="activeColor || undefined"
+      :inactive-color="inactiveColor || undefined"
     />
   </div>
 </template>

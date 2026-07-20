@@ -281,6 +281,13 @@ export const useEditorStore = defineStore('editor', () => {
     commit();
   }
 
+  /** 清空当前画布所有节点（入历史，支持撤销） */
+  function clearCanvas(): void {
+    commit();
+    nodes.value = [];
+    selectedId.value = null;
+  }
+
   function updateNode(id: string, patch: Partial<ComponentNode>): void {
     const node = findNodeById(id);
     if (node) Object.assign(node, patch);
@@ -549,6 +556,7 @@ export const useEditorStore = defineStore('editor', () => {
     moveUp,
     moveDown,
     commitSort,
+    clearCanvas,
     updateNode,
     updateProps,
     updateStyle,

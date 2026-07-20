@@ -8,6 +8,9 @@ const props = defineProps<{
   max?: number;
   step?: number;
   defaultValue?: number;
+  activeColor?: string;
+  inactiveColor?: string;
+  labelColor?: string;
 }>();
 
 const value = ref(props.defaultValue ?? 0);
@@ -22,13 +25,24 @@ defineExpose({
 
 <template>
   <div class="mat-slider">
-    <label v-if="label" class="field-label">{{ label }}</label>
+    <label
+      v-if="label"
+      class="field-label"
+      :style="{ color: labelColor || undefined }"
+    >
+      {{ label }}
+    </label>
+    <!-- Element Plus 新版 el-slider 废弃了 active-color/inactive-color prop，改用 CSS 变量 -->
     <el-slider
       v-model="value"
       :min="min ?? 0"
       :max="max ?? 100"
       :step="step ?? 1"
       :disabled="disabled"
+      :style="{
+        '--el-slider-main-bg-color': activeColor || undefined,
+        '--el-slider-runway-bg-color': inactiveColor || undefined,
+      }"
     />
   </div>
 </template>

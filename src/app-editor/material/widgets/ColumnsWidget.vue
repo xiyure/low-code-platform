@@ -16,7 +16,7 @@ const gapVal = computed(() => props.gap ?? 12);
     class="mat-columns"
     :style="{
       gap: gapVal + 'px',
-      background: props.background ?? 'transparent',
+      background: props.background || undefined,
     }"
   >
     <div v-for="i in cols" :key="i" class="mat-col col-placeholder">

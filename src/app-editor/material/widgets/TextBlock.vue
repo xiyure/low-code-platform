@@ -3,18 +3,17 @@ const props = defineProps<{
   content?: string;
   fontSize?: number;
   fontWeight?: string;
-  color?: string;
   align?: 'left' | 'center' | 'right';
 }>();
 </script>
 
 <template>
+  <!-- 颜色通过外层 .comp-wrapper 的 color 继承，避免属性 Tab 与样式 Tab 冲突 -->
   <div
     class="mat-text"
     :style="{
       fontSize: (props.fontSize ?? 14) + 'px',
       fontWeight: props.fontWeight ?? '400',
-      color: props.color ?? '#1f2329',
       textAlign: props.align ?? 'left',
     }"
   >

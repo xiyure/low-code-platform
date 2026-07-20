@@ -143,6 +143,8 @@ function onRemoveGlobalVar(id: string, name: string): void {
 
     <!-- 右侧编辑区 -->
     <main class="logic-main">
+     <el-scrollbar class="logic-scroll">
+      <div class="logic-inner">
       <!-- ===== 调用工作流 ===== -->
       <template v-if="activeSection === 'workflow'">
         <header class="section-header">
@@ -428,6 +430,8 @@ function onRemoveGlobalVar(id: string, name: string): void {
           </div>
         </div>
       </template>
+      </div>
+     </el-scrollbar>
     </main>
   </div>
 </template>
@@ -501,21 +505,30 @@ function onRemoveGlobalVar(id: string, name: string): void {
     display: flex;
     flex: 1;
     flex-direction: column;
-    padding: 20px 24px;
-    overflow-y: auto;
 
-    .section-header {
+    .logic-scroll {
+      flex: 1;
+      height: 0;
+    }
+
+    .logic-inner {
       display: flex;
-      flex-shrink: 0;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
+      flex-direction: column;
+      padding: 20px 24px;
 
-      .section-title {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--color-text-1);
+      .section-header {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+
+        .section-title {
+          margin: 0;
+          font-size: 16px;
+          font-weight: 600;
+          color: var(--color-text-1);
+        }
       }
     }
   }

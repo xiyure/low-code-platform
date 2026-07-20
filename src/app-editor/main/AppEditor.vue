@@ -13,6 +13,7 @@ import {
   Operation,
   Plus,
   HomeFilled,
+  Delete,
 } from '@element-plus/icons-vue';
 import type { AppListItem } from '@/types';
 import ComponentPanel from './ComponentPanel.vue';
@@ -110,6 +111,21 @@ async function onRemovePage(pageId: string, name: string): Promise<void> {
   });
   editor.removePage(pageId);
 }
+
+async function onClearCanvas(): Promise<void> {
+  if (editor.nodes.length === 0) return;
+  try {
+    await ElMessageBox.confirm('确定清空当前画布的所有组件？此操作可通过撤销恢复。', '清空画布', {
+      type: 'warning',
+      confirmButtonText: '清空',
+      cancelButtonText: '取消',
+    });
+    editor.clearCanvas();
+    ElMessage.success('画布已清空');
+  } catch {
+    // 用户取消
+  }
+}
 </script>
 
 <template>
@@ -187,6 +203,15 @@ async function onRemovePage(pageId: string, name: string): Promise<void> {
       </div>
       <el-button class="page-add" circle title="新建页面" @click="onAddPage">
         <el-icon><Plus /></el-icon>
+      </el-button>
+      <el-button
+        class="clear-btn"
+        :icon="Delete"
+        :disabled="editor.nodes.length === 0"
+        title="清空画布"
+        @click="onClearCanvas"
+      >
+        清空
       </el-button>
     </div>
 
@@ -347,6 +372,25 @@ async function onRemovePage(pageId: string, name: string): Promise<void> {
       &:hover {
         color: var(--color-primary);
         border-color: var(--color-primary);
+      }
+    }
+
+    .clear-btn {
+      margin-left: auto;
+      height: 30px;
+      color: var(--color-text-3);
+      background: transparent;
+      border: 1px solid var(--color-border);
+
+      &:hover {
+        color: var(--color-danger);
+        border-color: var(--color-danger);
+        background: rgb(245 63 63 / 6%);
+      }
+
+      &.is-disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
       }
     }
   }

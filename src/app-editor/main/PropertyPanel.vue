@@ -99,12 +99,76 @@ function updateOption(key: string, idx: number, patch: Partial<OptionItem>): voi
   );
 }
 
+// ===== itemsEditor 数据操作（可视化编辑列表/标签页/折叠面板等的数据） =====
+interface ItemRow {
+  text?: string;
+  [k: string]: string | number | undefined;
+}
+
+/** 获取 itemsEditor 的行数据（统一转为行对象数组） */
+function getItemRows(field: PropertyField): ItemRow[] {
+  const v = node.value?.props[field.key];
+  const format = field.itemFormat ?? 'array';
+
+  if (format === 'text') {
+    // text 格式：换行分隔的字符串或字符串数组
+    if (Array.isArray(v)) return (v as string[]).map((text) => ({ text }));
+    if (typeof v === 'string') return v.split('\n').filter(Boolean).map((text) => ({ text }));
+    return [];
+  }
+
+  // array 格式：对象数组（可能是 JSON 字符串）
+  if (Array.isArray(v)) return v as ItemRow[];
+  if (typeof v === 'string' && v.trim()) {
+    try {
+      const parsed = JSON.parse(v);
+      if (Array.isArray(parsed)) return parsed as ItemRow[];
+    } catch {
+      // 解析失败
+    }
+  }
+  return [];
+}
+
+/** 将行数据写回 props（按 format 决定存储格式） */
+function setItemRows(field: PropertyField, rows: ItemRow[]): void {
+  const format = field.itemFormat ?? 'array';
+  if (format === 'text') {
+    setProp(field.key, rows.map((r) => r.text ?? '').join('\n'));
+  } else {
+    setProp(field.key, JSON.stringify(rows));
+  }
+}
+
+function addItemRow(field: PropertyField): void {
+  const rows = [...getItemRows(field)];
+  const newRow: ItemRow = {};
+  for (const f of field.itemFields ?? []) {
+    newRow[f.key] = f.type === 'number' ? 0 : '';
+  }
+  rows.push(newRow);
+  setItemRows(field, rows);
+}
+
+function removeItemRow(field: PropertyField, idx: number): void {
+  setItemRows(field, getItemRows(field).filter((_, i) => i !== idx));
+}
+
+function updateItemRow(field: PropertyField, idx: number, key: string, value: string | number): void {
+  const rows = getItemRows(field).map((r, i) => (i === idx ? { ...r, [key]: value } : r));
+  setItemRows(field, rows);
+}
+
 const node = computed(() => editor.selectedNode);
 const meta = computed(() => (node.value ? materialRegistry[node.value.componentId] : null));
 
 /** 属性字段（group=props 或无 group） */
 const propFields = computed<PropertyField[]>(() =>
   (meta.value?.propertySchema ?? []).filter((f) => !f.group || f.group === 'props'),
+);
+/** 当前组件在属性 Tab 是否有 color 字段（有则样式 Tab 不重复显示文字颜色，避免两套 color 冲突） */
+const hasPropColor = computed(() =>
+  propFields.value.some((f) => f.key === 'color' && f.type === 'color'),
 );
 const events = computed<ComponentEvent[]>(() => node.value?.events ?? []);
 
@@ -232,7 +296,8 @@ const expandedEvent = ref<number | number[]>(0);
         </el-button>
       </div>
 
-      <div class="panel-body">
+      <el-scrollbar class="panel-scroll">
+        <div class="panel-body">
         <!-- 属性 Tab -->
         <div v-if="tab === 'props'" class="form-list">
           <div v-if="editor.variables.length > 0" class="var-hint">
@@ -277,8 +342,8 @@ const expandedEvent = ref<number | number[]>(0);
             />
             <el-color-picker
               v-else-if="field.type === 'color'"
-              :model-value="String(getProp(field.key) ?? '#ffffff')"
-              @update:model-value="(v) => setProp(field.key, v ?? '#ffffff')"
+              :model-value="getProp(field.key) as string"
+              @update:model-value="(v: string | null) => setProp(field.key, v || undefined)"
             />
             <el-slider
               v-else-if="field.type === 'slider'"
@@ -305,24 +370,26 @@ const expandedEvent = ref<number | number[]>(0);
                   <span v-else class="icon-preview-empty">无</span>
                 </div>
               </div>
-              <div class="icon-candidates">
-                <el-tooltip
-                  v-for="name in iconCandidates"
-                  :key="name"
-                  :content="name"
-                  placement="top"
-                >
-                  <el-button
-                    circle
-                    size="small"
-                    class="icon-candidate"
-                    :class="{ active: String(getProp(field.key)) === name }"
-                    @click="setProp(field.key, name)"
+              <el-scrollbar class="icon-candidates-scroll">
+                <div class="icon-candidates">
+                  <el-tooltip
+                    v-for="name in iconCandidates"
+                    :key="name"
+                    :content="name"
+                    placement="top"
                   >
-                    <el-icon><component :is="resolveIcon(name)" /></el-icon>
-                  </el-button>
-                </el-tooltip>
-              </div>
+                    <el-button
+                      circle
+                      size="small"
+                      class="icon-candidate"
+                      :class="{ active: String(getProp(field.key)) === name }"
+                      @click="setProp(field.key, name)"
+                    >
+                      <el-icon><component :is="resolveIcon(name)" /></el-icon>
+                    </el-button>
+                  </el-tooltip>
+                </div>
+              </el-scrollbar>
             </div>
             <!-- 选项编辑器：增删改 label/value -->
             <div v-else-if="field.type === 'optionsEditor'" class="options-editor">
@@ -348,6 +415,61 @@ const expandedEvent = ref<number | number[]>(0);
               </div>
               <el-button size="small" :icon="Plus" plain @click="addOption(field.key)">
                 添加选项
+              </el-button>
+            </div>
+            <!-- itemsEditor：可视化编辑列表/标签页/折叠面板等的数据项 -->
+            <div v-else-if="field.type === 'itemsEditor'" class="items-editor">
+              <div
+                v-for="(row, idx) in getItemRows(field)"
+                :key="idx"
+                class="item-row"
+              >
+                <div class="item-row-index">{{ idx + 1 }}</div>
+                <div class="item-row-fields">
+                  <div
+                    v-for="f in field.itemFields"
+                    :key="f.key"
+                    class="item-field"
+                  >
+                    <label class="item-field-label">{{ f.label }}</label>
+                    <el-input
+                      v-if="f.type === 'input' || !f.type"
+                      :model-value="String(row[f.key] ?? '')"
+                      size="small"
+                      @update:model-value="(v) => updateItemRow(field, idx, f.key, v)"
+                    />
+                    <el-input-number
+                      v-else-if="f.type === 'number'"
+                      :model-value="Number(row[f.key] ?? 0)"
+                      size="small"
+                      controls-position="right"
+                      @update:model-value="(v) => updateItemRow(field, idx, f.key, v ?? 0)"
+                    />
+                    <el-color-picker
+                      v-else-if="f.type === 'color'"
+                      :model-value="String(row[f.key] ?? '')"
+                      size="small"
+                      @update:model-value="(v) => (row[f.key] = v ?? '')"
+                    />
+                    <el-input
+                      v-else-if="f.type === 'iconPicker'"
+                      :model-value="String(row[f.key] ?? '')"
+                      size="small"
+                      placeholder="图标名"
+                      @update:model-value="(v) => updateItemRow(field, idx, f.key, v)"
+                    />
+                  </div>
+                </div>
+                <el-button
+                  size="small"
+                  circle
+                  :icon="DeleteIcon"
+                  class="item-row-del"
+                  @click="removeItemRow(field, idx)"
+                />
+              </div>
+              <el-button size="small" :icon="Plus" plain @click="addItemRow(field)">
+                添加数据项
               </el-button>
             </div>
             <el-select
@@ -431,8 +553,8 @@ const expandedEvent = ref<number | number[]>(0);
               <div class="form-item">
                 <label class="form-label">边框颜色</label>
                 <el-color-picker
-                  :model-value="getStyle('borderColor') || '#e5e6eb'"
-                  @update:model-value="(v) => setStyle('borderColor', v ?? '#e5e6eb')"
+                  :model-value="getStyle('borderColor')"
+                  @update:model-value="(v: string | null) => setStyle('borderColor', v || '')"
                 />
               </div>
             </el-collapse-item>
@@ -442,8 +564,8 @@ const expandedEvent = ref<number | number[]>(0);
               <div class="form-item">
                 <label class="form-label">背景色</label>
                 <el-color-picker
-                  :model-value="getStyle('backgroundColor') || '#ffffff'"
-                  @update:model-value="(v) => setStyle('backgroundColor', v ?? '#ffffff')"
+                  :model-value="getStyle('backgroundColor')"
+                  @update:model-value="(v: string | null) => setStyle('backgroundColor', v || '')"
                 />
               </div>
             </el-collapse-item>
@@ -483,11 +605,11 @@ const expandedEvent = ref<number | number[]>(0);
                   @update:model-value="(v) => setStyle('lineHeight', String(v ?? 0))"
                 />
               </div>
-              <div class="form-item">
+              <div v-if="!hasPropColor" class="form-item">
                 <label class="form-label">文字颜色</label>
                 <el-color-picker
-                  :model-value="getStyle('color') || '#1f2329'"
-                  @update:model-value="(v) => setStyle('color', v ?? '#1f2329')"
+                  :model-value="getStyle('color')"
+                  @update:model-value="(v: string | null) => setStyle('color', v || '')"
                 />
               </div>
               <div class="form-item">
@@ -574,7 +696,8 @@ const expandedEvent = ref<number | number[]>(0);
           </el-collapse>
           <div v-if="events.length === 0" class="muted">暂未绑定事件，点击上方按钮添加</div>
         </div>
-      </div>
+        </div>
+      </el-scrollbar>
     </template>
   </aside>
 </template>
@@ -678,15 +801,18 @@ const expandedEvent = ref<number | number[]>(0);
     }
   }
 
-  .panel-body {
+  .panel-scroll {
     flex: 1;
-    padding: 16px;
-    overflow-y: auto;
+    height: 0;
+  }
+
+  .panel-body {
+    padding: 12px 16px;
 
     .form-list {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
 
       .var-hint {
         padding: 8px 10px;
@@ -704,8 +830,7 @@ const expandedEvent = ref<number | number[]>(0);
       .form-item {
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        margin-bottom: 10px;
+        gap: 4px;
 
         .form-label {
           font-size: 12px;
@@ -721,13 +846,41 @@ const expandedEvent = ref<number | number[]>(0);
     /* 样式 Tab */
     .style-list {
       :deep(.el-collapse-item__header) {
+        height: 34px;
         font-size: 13px;
         font-weight: 600;
         color: var(--color-text-1);
       }
 
       :deep(.el-collapse-item__content) {
-        padding-bottom: 8px;
+        padding: 8px 0 12px;
+      }
+
+      /* 样式项：水平布局（label 左侧固定宽度，控件右侧填充） */
+      .form-item {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 8px;
+
+        .form-label {
+          flex-shrink: 0;
+          width: 72px;
+          font-size: 12px;
+          color: var(--color-text-3);
+          text-align: right;
+        }
+
+        /* 颜色选择器等小型控件靠左对齐 */
+        .el-color-picker {
+          flex-shrink: 0;
+        }
+
+        /* 滑块撑满剩余空间 */
+        .el-slider {
+          flex: 1;
+        }
       }
     }
 
@@ -817,26 +970,28 @@ const expandedEvent = ref<number | number[]>(0);
         }
       }
 
-      .icon-candidates {
-        display: grid;
-        grid-template-columns: repeat(8, 1fr);
-        gap: 4px;
+      .icon-candidates-scroll {
         max-height: 180px;
-        padding: 6px;
-        overflow-y: auto;
         background: var(--color-bg-2);
         border-radius: var(--radius-md);
 
-        .icon-candidate {
-          width: 28px;
-          height: 28px;
-          padding: 0;
-          font-size: 14px;
-          color: var(--color-text-2);
+        .icon-candidates {
+          display: grid;
+          grid-template-columns: repeat(8, 1fr);
+          gap: 4px;
+          padding: 6px;
 
-          &.active {
-            color: var(--color-primary);
-            background: var(--color-primary-light);
+          .icon-candidate {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            font-size: 14px;
+            color: var(--color-text-2);
+
+            &.active {
+              color: var(--color-primary);
+              background: var(--color-primary-light);
+            }
           }
         }
       }
@@ -852,6 +1007,59 @@ const expandedEvent = ref<number | number[]>(0);
         display: flex;
         gap: 6px;
         align-items: center;
+      }
+    }
+
+    /* 数据项编辑器 */
+    .items-editor {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .item-row {
+        display: flex;
+        gap: 6px;
+        padding: 8px;
+        background: var(--color-bg-2);
+        border-radius: var(--radius-sm);
+
+        .item-row-index {
+          display: flex;
+          flex-shrink: 0;
+          align-items: flex-start;
+          justify-content: center;
+          width: 18px;
+          height: 18px;
+          margin-top: 4px;
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--color-text-3);
+          background: var(--color-bg-3);
+          border-radius: 50%;
+        }
+
+        .item-row-fields {
+          display: flex;
+          flex: 1;
+          flex-direction: column;
+          gap: 6px;
+
+          .item-field {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+
+            .item-field-label {
+              font-size: 11px;
+              color: var(--color-text-3);
+            }
+          }
+        }
+
+        .item-row-del {
+          flex-shrink: 0;
+          margin-top: 4px;
+        }
       }
     }
   }

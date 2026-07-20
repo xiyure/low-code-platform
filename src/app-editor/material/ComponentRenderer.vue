@@ -93,6 +93,11 @@ const wrapperStyle = computed<CSSProperties>(() => {
     const camel = k.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
     (s as Record<string, string>)[camel] = v;
   }
+  // 属性 Tab 的 color 优先于样式 Tab 的 color（让组件通过 .comp-wrapper 继承颜色）
+  const propColor = props.node.props.color;
+  if (typeof propColor === 'string' && propColor) {
+    s.color = propColor;
+  }
   return s;
 });
 </script>

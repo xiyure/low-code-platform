@@ -3,7 +3,7 @@ defineProps<{
   text?: string;
   href?: string;
   type?: string;
-  underline?: boolean;
+  underline?: 'always' | 'hover' | 'never';
   disabled?: boolean;
 }>();
 </script>
@@ -12,7 +12,7 @@ defineProps<{
   <el-link
     :href="href"
     :type="(type ?? 'default') as any"
-    :underline="underline"
+    :underline="underline ?? 'always'"
     :disabled="disabled"
     target="_blank"
   >

@@ -36,8 +36,6 @@ const props = defineProps<{
 const editor = useEditorStore();
 const containerEl = ref<HTMLElement>();
 const dragOver = ref(false);
-// dragenter/dragleave 在子元素间切换时也会触发，用计数器避免高亮闪烁
-let dragCounter = 0;
 
 // 编辑模式：初始化 SortableJS
 // toRef(props, 'children') 返回指向 props.children 的可写 ref，
@@ -57,37 +55,37 @@ if (!props.readonly) {
   });
 }
 
+/** 判断是否为物料库拖入（仅此时显示 drop 状态和接受 drop） */
+function isMaterialDrag(e: DragEvent): boolean {
+  return !!e.dataTransfer?.types.includes('application/x-material-id');
+}
+
 // 物料库原生拖入（HTML5 drag，dataTransfer 带 materialId）
 function onDrop(e: DragEvent): void {
+  if (!isMaterialDrag(e)) return; // 非物料库拖入，交给 SortableJS
   const materialId = e.dataTransfer?.getData('application/x-material-id');
-  if (!materialId) return; // 非物料库拖入，交给 SortableJS
+  if (!materialId) return;
   e.preventDefault();
   e.stopPropagation();
-  dragCounter = 0;
   dragOver.value = false;
   editor.addNode(materialId, undefined, props.parentId, props.slotName || undefined);
 }
 
 function onDragOver(e: DragEvent): void {
-  if (!e.dataTransfer?.types.includes('application/x-material-id')) return;
+  if (!isMaterialDrag(e)) return;
   e.preventDefault();
   e.stopPropagation();
-  e.dataTransfer.dropEffect = 'copy';
-}
-
-function onDragEnter(e: DragEvent): void {
-  if (!e.dataTransfer?.types.includes('application/x-material-id')) return;
-  e.preventDefault();
-  dragCounter++;
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+  // dragover 持续触发时设 true（离开由 dragleave 处理）
   dragOver.value = true;
 }
 
 function onDragLeave(e: DragEvent): void {
-  // 仅当离开容器（relatedTarget 不在容器内）时才计数减少
+  if (!isMaterialDrag(e)) return;
+  // 仅当离开容器（relatedTarget 不在容器内）时才清除高亮
   const related = e.relatedTarget as Node | null;
   if (related && containerEl.value?.contains(related)) return;
-  dragCounter = Math.max(0, dragCounter - 1);
-  if (dragCounter === 0) dragOver.value = false;
+  dragOver.value = false;
 }
 </script>
 
@@ -98,7 +96,6 @@ function onDragLeave(e: DragEvent): void {
     :class="{ empty: children.length === 0, 'drop-active': dragOver }"
     @drop="onDrop"
     @dragover="onDragOver"
-    @dragenter="onDragEnter"
     @dragleave="onDragLeave"
   >
     <NodeWrapper

@@ -12,6 +12,8 @@ const props = defineProps<{
   disabled?: boolean;
   options?: Option[];
   defaultValue?: string[];
+  textColor?: string;
+  activeColor?: string;
 }>();
 
 const value = ref<string[]>(props.defaultValue ?? []);
@@ -27,10 +29,21 @@ defineExpose({
 
 <template>
   <div class="mat-checkbox">
-    <label v-if="label" class="field-label">
+    <label
+      v-if="label"
+      class="field-label"
+      :style="{ color: textColor || undefined }"
+    >
       {{ label }}<span v-if="required" class="required-mark">*</span>
     </label>
-    <el-checkbox-group v-model="value" :disabled="disabled">
+    <el-checkbox-group
+      v-model="value"
+      :disabled="disabled"
+      :style="{
+        '--el-color-primary': activeColor || undefined,
+        '--el-checkbox-text-color': textColor || undefined,
+      }"
+    >
       <el-checkbox v-for="opt in options" :key="opt.value" :value="opt.value">
         {{ opt.label }}
       </el-checkbox>

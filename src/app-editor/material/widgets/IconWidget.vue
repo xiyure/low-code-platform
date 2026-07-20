@@ -17,7 +17,7 @@ const iconComp = computed(() =>
   <el-icon
     :style="{
       fontSize: (size ?? 24) + 'px',
-      color: color,
+      color: color || undefined,
     }"
   >
     <component :is="iconComp" />

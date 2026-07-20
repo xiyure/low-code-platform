@@ -102,7 +102,8 @@ export interface PropertyField {
     | 'color'
     | 'slider'
     | 'iconPicker'
-    | 'optionsEditor';
+    | 'optionsEditor'
+    | 'itemsEditor';
   options?: { label: string; value: string | number | boolean }[];
   default?: unknown;
   group?: 'props' | 'style' | 'event';
@@ -110,6 +111,10 @@ export interface PropertyField {
   min?: number;
   max?: number;
   step?: number;
+  /** itemsEditor：每行的字段定义（如 [{key:'title',label:'标题'},{key:'desc',label:'描述'}]） */
+  itemFields?: { key: string; label: string; type?: 'input' | 'number' | 'color' | 'iconPicker' }[];
+  /** itemsEditor：数据格式（array=对象数组 JSON，text=换行分隔文本） */
+  itemFormat?: 'array' | 'text';
 }
 
 /** 物料分组（参照扣子：布局/输入/展示/自定义） */
